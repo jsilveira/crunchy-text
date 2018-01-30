@@ -1,0 +1,15 @@
+body {
+}
+
+.ResultsTable {
+    border-spacing: 4px;
+    border-collapse: separate;
+    width: 100%;
+}
+.ResultsTable tr {
+    margin-bottom: 2px;
+}
+.ResultsTable td {
+    background-color: whitesmoke;
+    padding: 0 10px;
+}
