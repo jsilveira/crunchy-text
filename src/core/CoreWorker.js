@@ -3,7 +3,7 @@ import _ from "../lib/lodash.js"
 
 let stringTest = [];
 let items = [];
-let filtradas = [];
+
 let topMatches = {};
 let partial = false;
 
@@ -67,6 +67,7 @@ export default class CoreWorker {
       regex = /.*/g;
     }
 
+
     if(items.length === 0) return;
     re = regex;
 
@@ -74,9 +75,8 @@ export default class CoreWorker {
 
     progressSent = false;
     topMatches = {};
-    filtradas = [];
-
-    let START = 0;
+    let sampleMatches = [];
+    this.matchesIndex = [];
 
     let startTime = new Date();
     let lastPause = new Date();
@@ -84,13 +84,27 @@ export default class CoreWorker {
     const resume = (START, query) => {
       let i = 0;
       for (i = START; i < items.length; i++) {
-        let den = items[i];
-        let m = (den || "").toString().match(re);
-        if (m) {
-          for(let g of m) {
-            topMatches[g] = (topMatches[g] || 0) + 1
+        const den = items[i];
+        const itemText = (den || "").toString();
+
+        let execRes = null;
+        let matches = [];
+        let lastIndex = null;
+        while (execRes = re.exec(itemText)) {
+          // Prevent infinite loop if the regex does not consume characters
+          if(execRes.index === lastIndex)
+            break;
+
+          topMatches[execRes[0]] = (topMatches[execRes[0]] || 0) + 1
+          matches.push(execRes)
+          lastIndex = execRes.index;
+        }
+
+        if(matches.length > 0) {
+          this.matchesIndex.push(i);
+          if (sampleMatches.length < 2000) {
+            sampleMatches.push({itemText, matches: matches});
           }
-          filtradas.push(den);
         }
 
         // Check only in some iterations for performance
@@ -125,10 +139,11 @@ export default class CoreWorker {
         lastSearchTime = new Date().valueOf() - startTime;
 
         this.sendProgress('searchDone', {
-          filteredItems: filtradas.slice(0, 20000),
+          matchSamples: sampleMatches.slice(0, 2000),
           stats: {
             searchTime: lastSearchTime,
-            matchesCount: filtradas.length
+            matchesCount: this.matchesIndex.length,
+            totalCount: items.length
           },
           extras: {topMatches}
         });
@@ -136,7 +151,8 @@ export default class CoreWorker {
     };
 
     clearTimeout(nextTick);
-    resume(START, regex.toString());
+
+    resume(0, regex.toString());
   }
 
 
@@ -145,7 +161,7 @@ export default class CoreWorker {
 
   nonCircularObjectToString(doc) {
     if(typeof doc === "object") {
-      return _.map(_.values(doc), this.nonCircularObjectToString).join(" ||| ")
+      return _.map(_.values(doc), doc => this.nonCircularObjectToString(doc)).join(" ||| ")
     } else {
       return (doc || "").toString()
     }
@@ -177,20 +193,13 @@ export default class CoreWorker {
 
     this.log(``);
 
-    filtradas = items
     stringTest = items.slice(0, 10000);
   }
 
+  // Called by worker.js
   loadData(data) {
     this.parseDataObject(data)
   }
-
-  // loadFile(input) {
-  //   log("Loading huge file...");
-  //   this.getJSON(input, this.parseDataObject, (e) => {
-  //     this.log(`Error loading '${input}': ${e.toString()}`)
-  //   });
-  // }
 }
 
 const cleanupRegexes = [

@@ -2,20 +2,21 @@ import React, {Component} from 'react';
 
 
 export default class SearchResults extends Component {
-  constructor(props) {
-    super(props);
-  }
-
   render() {
-    let searchRes = this.props.res || {};
-    let items = (searchRes.filteredItems || []);
+    let searchRes = this.props.res;
+
+    if(!searchRes)  {
+      return (<div className={"m-3"}><h5>No data has been loaded yet</h5></div>)
+    }
+
+    let items = (searchRes.matchSamples || []);
     let stats = (searchRes.stats || {});
-    let searchTime = this.props.progress || stats.searchTime + "ms";
+    let status = this.props.progress || `Searched ${stats.totalCount} items in ${stats.searchTime}ms`;
 
     const results = []
     items.slice(0, 50).forEach((res, i) => {
       results.push(<tr key={i} className={""}>
-        <td> {res.toString()} </td>
+        <td> <RegexSearchResult result={res}/></td>
       </tr>)
     });
 
@@ -25,23 +26,60 @@ export default class SearchResults extends Component {
       </tr>)
     }
 
+    const extras = [];
+
+    if (searchRes.extras) {
+      let max = 50;
+      let top = (searchRes.extras || {}).topMatches;
+      if (top) {
+        extras.push(<h5 key={'title'}>Unique matches: {top.length}</h5>)
+        extras.push(<TopMatches key={'top'} title={`Top ${Math.min(max, top.length)} matches`} matches={top.slice(0, max)}/>)
+        if (top.length > max) {
+          extras.push(<hr key={'hr'}/>)
+          extras.push(< TopMatches key={'bottom'} title={`Bottom ${max} matches`}
+                                   matches={top.slice(-Math.min(top.length - max, max))}/>)
+        }
+      }
+    }
+
     return (
-      <div className="container-fluid my-sm-2">
-        <h5>{stats.matchesCount} matches <em className={"text-info"}>{searchTime}</em></h5>
+      <div className="container-fluid">
         <div className={"row"}>
-          <div className={"col-9"}>
+          <div className={"col-9 p-4"}>
+            <h5>
+              {stats.matchesCount} matches &nbsp;
+              <em className={"text-info"}>{status}</em>
+            </h5>
             <table className={"ResultsTable"}>
               <tbody>
               {results}
               </tbody>
             </table>
           </div>
-          <div className={"col-3"}>
-            <TopMatches matches={(searchRes.extras || {}).topMatches || []}/>
-          </div>
+          <div className={"col-3 bg-light p-4"}>{extras}</div>
         </div>
       </div>
     );
+  }
+}
+
+class RegexSearchResult extends Component {
+  render() {
+    const parts = []
+    const {itemText, matches} = this.props.result;
+    let from = 0;
+    // debugger;
+    matches.forEach((m, i) => {
+      parts.push(itemText.slice(from, m.index));
+      let to = m.index+m[0].length;
+      parts.push(<mark key={i}>{itemText.slice(m.index,to)}</mark>);
+      from = to;
+    })
+    parts.push(itemText.slice(from));
+
+    return (
+      <div>{ parts }</div>
+    )
   }
 }
 
@@ -57,19 +95,19 @@ class TopMatches extends Component {
     const matches = []
     items.slice(0, 100).forEach((m, i) => {
       matches.push(<tr key={i} className={""}>
-        <td> {m[0].toString()} </td>
         <td className={"text-info text-right"}> {m[1].toString()} </td>
+        <td>{m[0].toString()} </td>
       </tr>)
     });
 
     return (
       <div>
-        <h5>Top matches count</h5>
-            <table className={"TopMatchesTable"}>
-              <tbody>
-              {matches}
-              </tbody>
-            </table>
+        <h6>{this.props.title}</h6>
+        <table className={"TopMatchesTable"}>
+          <tbody>
+          {matches}
+          </tbody>
+        </table>
       </div>
     );
   }

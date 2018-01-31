@@ -93,7 +93,7 @@ export default class InputBar extends Component {
     }
 
     return (
-      <div className="bg-dark container-fluid text-white p-1 text-center">
+      <div className="bg-dark container-fluid text-white text-center pt-2">
         {fileInfo}
         <FileDrop frame={document} onDrop={this.handleFileDrop.bind(this)}>
           <div className="" id="navbarSupportedContent">

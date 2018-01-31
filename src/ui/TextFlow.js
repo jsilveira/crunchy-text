@@ -19,8 +19,8 @@ export default class TextFlow extends Component {
     super();
     this.state = {
       textInput: [],
-      search: '',
-      results: [],
+      search: 'de \\w+',
+      results: null,
       inputSettings: null,
       stats: {}
     };
@@ -28,10 +28,10 @@ export default class TextFlow extends Component {
     this.searchChanged = this.searchChanged.bind(this);
     this.textInputChanged = this.textInputChanged.bind(this);
 
-    // fetchSample().then(async (json) => {
     coreWorker.loadData(sampleData);
-    coreWorker.search()
-    // })
+    setTimeout(() => {
+      this.search();
+    }, 20)
 
     coreWorker.onLoadProgress(progress => this.setState({progress}))
     coreWorker.onSearchDone((results) => this.setState({results, stats: results.stats, progress: ""}))

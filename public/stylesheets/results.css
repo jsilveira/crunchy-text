@@ -1,19 +1,32 @@
 body {
     overflow-y: scroll;
+    font-size: 0.95rem;
 }
 
-.TopMatchesTable {
-    width: 100%;
+.TopMatchesTable td:last-child {
+    padding-left: 20px;
 }
+.TopMatchesTable td:first-child {
+    min-width: 50px;
+}
+
 .ResultsTable {
-    border-spacing: 4px;
-    border-collapse: separate;
     width: 100%;
 }
+
 .ResultsTable tr {
     margin-bottom: 2px;
 }
+
 .ResultsTable td {
-    background-color: whitesmoke;
-    padding: 2px 10px;
+    /*background-color: whitesmoke;*/
+    padding: 4px 10px;
+    border-top: dotted 1px gray;
+}
+
+mark {
+    padding: .2em 0;
+    padding-left: 1px;
+    margin-left: -1px;
+    background-color: yellow;
 }
