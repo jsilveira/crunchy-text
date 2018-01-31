@@ -22,7 +22,6 @@ export default class TextFlow extends Component {
       search: '',
       results: [],
       inputSettings: null,
-      status: "-",
       stats: {}
     };
 
@@ -34,8 +33,8 @@ export default class TextFlow extends Component {
     coreWorker.search()
     // })
 
-    coreWorker.onLoadProgress(progress => this.setState({status: progress}))
-    coreWorker.onSearchDone((results) => this.setState({results, stats: results.stats}))
+    coreWorker.onLoadProgress(progress => this.setState({progress}))
+    coreWorker.onSearchDone((results) => this.setState({results, stats: results.stats, progress: ""}))
   }
 
   search() {
@@ -57,7 +56,7 @@ export default class TextFlow extends Component {
   }
 
   inputChanged(input) {
-    this.textInputChanged(input.split('\n'))
+    this.textInputChanged(input)
   }
 
   render() {
@@ -65,8 +64,7 @@ export default class TextFlow extends Component {
       <div>
         <InputBar value={this.state.inputSettings} onChange={this.inputChanged.bind(this)} />
         <SearchBar value={this.state.search} onChange={this.searchChanged.bind(this)} />
-        <div>{this.state.status}</div>
-        <SearchResults res={this.state.results} />
+        <SearchResults progress={this.state.progress} res={this.state.results} />
       </div>
     );
   }

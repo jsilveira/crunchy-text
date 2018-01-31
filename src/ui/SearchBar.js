@@ -27,10 +27,10 @@ export default class SearchBar extends Component {
 
   render() {
     return (
-      <div className="navbar navbar-expand-lg navbar-light bg-light">
+      <div className="bg-dark container-fluid p-3">
         <div className="" id="navbarSupportedContent">
-          <form className="form-inline my-0 my-lg-0">
-            <input type="search" placeholder="Search text here..." className="form-control" value={this.state.value} onChange={this.handleChange} />
+          <form className="my-0 my-lg-0">
+            <input type="search" placeholder="Search text with regex..." className="form-control" value={this.state.value} onChange={this.handleChange} />
           </form>
         </div>
       </div>

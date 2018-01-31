@@ -1,6 +1,10 @@
 body {
+    overflow-y: scroll;
 }
 
+.TopMatchesTable {
+    width: 100%;
+}
 .ResultsTable {
     border-spacing: 4px;
     border-collapse: separate;
@@ -11,5 +15,5 @@ body {
 }
 .ResultsTable td {
     background-color: whitesmoke;
-    padding: 0 10px;
+    padding: 2px 10px;
 }

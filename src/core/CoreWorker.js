@@ -125,9 +125,10 @@ export default class CoreWorker {
         lastSearchTime = new Date().valueOf() - startTime;
 
         this.sendProgress('searchDone', {
-          filteredItems: filtradas.slice(0, 500000),
+          filteredItems: filtradas.slice(0, 20000),
           stats: {
-            searchTime: lastSearchTime
+            searchTime: lastSearchTime,
+            matchesCount: filtradas.length
           },
           extras: {topMatches}
         });

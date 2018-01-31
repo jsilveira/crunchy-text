@@ -1,6 +1,20 @@
 import React, {Component} from 'react';
 import FileDrop from 'react-file-drop'
 
+class DataLoader {
+  static loadFileData(file, data) {
+    let fileName = file.name.toLowerCase();
+    if(fileName.endsWith('.txt')) {
+      return data.split('\n')
+    } else if(fileName.endsWith('.json')) {
+      return JSON.parse(data);
+    } else {
+      console.warn('Unsupported file format, treating as text')
+      return data.split('\n')
+    }
+  }
+}
+
 export default class InputBar extends Component {
   constructor(props) {
     super(props);
@@ -45,6 +59,7 @@ export default class InputBar extends Component {
         if (percentLoaded < 100) {
           //angular.element($(".resultsarea")).scope().loadingFileProgress(`Loading ${percentLoaded}% (${file.name})`);
           console.log(`Loading ${percentLoaded}% (${file.name})`);
+
         }
       }
     };
@@ -55,8 +70,9 @@ export default class InputBar extends Component {
       // angular.element($(".resultsarea")).scope().loadingFileProgress(`Loading ${100}% (${file.name})`);
 
       console.log(`Loaded 100% (${file.name})`);
+
       if (this.props.onChange) {
-        this.props.onChange(reader.result)
+        this.props.onChange(DataLoader.loadFileData(file, reader.result))
       }
     };
     // Read in the image file as a binary string.
@@ -70,13 +86,14 @@ export default class InputBar extends Component {
       fileInfo = (<div>
         <strong>{file.name}</strong>
         &nbsp; { Math.ceil(file.size / (1024*1024)*10)/10 } MB
+        <span className={"text-info"}></span>
       </div>)
     } else {
       fileInfo = "Drag and drop a text/json/csv file here"
     }
 
     return (
-      <div className="navbar navbar-expand-lg navbar-light bg-dark text-white text-center">
+      <div className="bg-dark container-fluid text-white p-1 text-center">
         {fileInfo}
         <FileDrop frame={document} onDrop={this.handleFileDrop.bind(this)}>
           <div className="" id="navbarSupportedContent">
