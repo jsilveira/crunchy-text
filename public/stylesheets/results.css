@@ -3,6 +3,9 @@ body {
     font-size: 0.95rem;
 }
 
+.TopMatchesTable {
+    font-size: 0.9em;
+}
 .TopMatchesTable td:last-child {
     padding-left: 20px;
 }

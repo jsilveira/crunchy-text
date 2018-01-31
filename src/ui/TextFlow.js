@@ -47,7 +47,9 @@ export default class TextFlow extends Component {
 
   textInputChanged(textInput) {
     this.setState({ textInput })
+    console.log("Sending data to worker")
     coreWorker.loadData(textInput);
+    console.log("Sending data DONE")
     this.search()
   }
 
@@ -55,14 +57,10 @@ export default class TextFlow extends Component {
     this.setState({ search }, () => this.search())
   }
 
-  inputChanged(input) {
-    this.textInputChanged(input)
-  }
-
   render() {
     return (
       <div>
-        <InputBar value={this.state.inputSettings} onChange={this.inputChanged.bind(this)} />
+        <InputBar value={this.state.inputSettings} onChange={this.textInputChanged.bind(this)} />
         <SearchBar value={this.state.search} onChange={this.searchChanged.bind(this)} />
         <SearchResults progress={this.state.progress} res={this.state.results} />
       </div>

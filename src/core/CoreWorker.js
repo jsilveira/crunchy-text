@@ -1,7 +1,6 @@
 // self.onmessage=function(e){postMessage('Worker: '+e.data);}
 import _ from "../lib/lodash.js"
 
-let stringTest = [];
 let items = [];
 
 let topMatches = {};
@@ -12,61 +11,31 @@ let lastSearchTime = 0;
 let progressSent = false;
 let nextTick = 0;
 
-let re = new RegExp();
+let re = new RegExp(/.*/g);
 
 export default class CoreWorker {
   progressCbk;
   constructor(loggerCbk, progressCbk) {
     this.loggerFn = loggerCbk;
     this.progressCbk = progressCbk;
-  }
 
-
-  getJSON(url, sucessCbk, errCbk = ()=>console.error(err)) {
-    let request = new XMLHttpRequest();
-    request.open('GET', url, true);
-
-    request.onload = function () {
-      if (request.status >= 200 && request.status < 400) {
-        sucessCbk(JSON.parse(request.responseText));
-      } else {
-        errCbk("Error " + request.status)
-      }
-    };
-
-    request.onerror = function (err) {
-      errCbk(err)
-    };
-
-    request.send();
+    this.preprocessors = [];
   }
 
   log(... msg) {
     if(this.loggerFn) {
       this.loggerFn(... msg)
     }
-
-    //if(msg) console.debug(msg)
   }
 
   sendProgress(msg, progressData){
     this.progressCbk(msg, progressData);
-    /*self.postMessage({action: 'search-result', res: {
-        filtradas: filtradas.slice(0, 500000),
-        filtradasLength: filtradas.length,
-        partial,
-        lastSearchTime,
-        topMatches
-      }});
-    console.log(`Search progress con '${query}'`)*/
   }
-
 
   search(regex) {
     if(!regex) {
       regex = /.*/g;
     }
-
 
     if(items.length === 0) return;
     re = regex;
@@ -155,70 +124,39 @@ export default class CoreWorker {
     resume(0, regex.toString());
   }
 
-
-  // Sample data loaded
-  // parseDataObject(sampleData)
-
-  nonCircularObjectToString(doc) {
-    if(typeof doc === "object") {
-      return _.map(_.values(doc), doc => this.nonCircularObjectToString(doc)).join(" ||| ")
-    } else {
-      return (doc || "").toString()
-    }
-  }
-
-  parseDataObject(data){
-    items = [];
+  parseDataArray(data){
     this.sendProgress("loadProgress", "Preprocessing " + data.length + " strings...");
 
     let lastStatus = new Date();
-    _.each(data, (doc, index) => {
-      if(_.isObject(doc)){
-        doc = this.nonCircularObjectToString(doc)
-      }
 
+    items = [];
+    _.each(data, (doc, index) => {
       try {
-        let cleanSearch = removeDiacriticsCasero(doc || "").trim();
-        // cleanSearch = removeStopWords(cleanSearch)
-        items.push(cleanSearch)
+        let processedItem = doc;
+        _.each(this.preprocessors, preproc => processedItem = preproc.syncProcess(processedItem));
+        items.push(processedItem)
       } catch (err) {
         console.error(err, doc)
       }
 
-      if (new Date() - lastStatus > 400) {
-        this.sendProgress("loadProgress", "Processing " + data.length + " strings... (" + (100 * index / data.length).toFixed(1) + "%)");
+      if (new Date() - lastStatus > 100) {
+        this.sendProgress("loadProgress", "Preprocessing " + data.length + " strings... (" + (100 * index / data.length).toFixed(1) + "%)");
         lastStatus = new Date();
       }
     });
 
-    this.log(``);
-
-    stringTest = items.slice(0, 10000);
+    this.sendProgress("loadProgress", "Done parsing and preprocessing data.");
   }
 
   // Called by worker.js
   loadData(data) {
-    this.parseDataObject(data)
+    this.parseDataArray(data)
+  }
+
+  setPreprocessors(preprocessors) {
+    this.preprocessors = preprocessors
   }
 }
 
-const cleanupRegexes = [
-  [new RegExp("[àáâãäå]", 'g'), "a"],
-  [new RegExp("æ", 'g'), "ae"],
-  [new RegExp("ç", 'g'), "c"],
-  [new RegExp("[èéêë]", 'g'), "e"],
-  [new RegExp("[ìíîï]", 'g'), "i"],
-  [new RegExp("ñ", 'g'), "n"],
-  [new RegExp("[òóôõö]", 'g'), "o"],
-  [new RegExp("œ", 'g'), "oe"],
-  [new RegExp("[ùúûü]", 'g'), "u"],
-  [new RegExp("[ýÿ]", 'g'), "y"]
 
-]
-function removeDiacriticsCasero(s) {
-  if (s) {
-    s = s.toLowerCase();
-    _.each(cleanupRegexes, ([regex, replace]) => s = s.replace(regex, replace))
-  }
-  return s;
-}
+

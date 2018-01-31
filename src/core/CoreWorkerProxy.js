@@ -30,6 +30,10 @@ export default class CoreWorkerProxy {
     return await this.proxyCall('loadData', data)
   }
 
+  async setPreprocessors(preprocessors) {
+    return await this.proxyCall('setPreprocessors', preprocessors)
+  }
+
   async search(searchObj) {
     return await this.proxyCall('search', searchObj)
   }
