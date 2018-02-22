@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 
 import InputBar from './InputBar.js';
 import SearchBar from './SearchBar.js';
@@ -40,29 +40,36 @@ export default class TextFlow extends Component {
   search() {
     try {
       coreWorker.search(new RegExp(this.state.search, 'ig'));
-    } catch(err) {
+    } catch (err) {
       this.setState({invalidInput: true})
     }
   }
 
   textInputChanged(textInput) {
-    this.setState({ textInput })
+    this.setState({textInput})
     console.log("Sending data to worker")
     coreWorker.loadData(textInput);
     console.log("Sending data DONE")
     this.search()
   }
 
+  preprocessorsChanged(preprocessors) {
+    preprocessors.forEach(p => p.className = p.name)
+    coreWorker.setPreprocessors(preprocessors);
+  }
+
   searchChanged(search) {
-    this.setState({ search }, () => this.search())
+    this.setState({search}, () => this.search())
   }
 
   render() {
     return (
       <div>
-        <InputBar value={this.state.inputSettings} onChange={this.textInputChanged.bind(this)} />
-        <SearchBar value={this.state.search} onChange={this.searchChanged.bind(this)} />
-        <SearchResults progress={this.state.progress} res={this.state.results} />
+        <InputBar value={this.state.inputSettings}
+                  onChange={this.textInputChanged.bind(this)}
+                  onPreprocessorChange={this.preprocessorsChanged.bind(this)}/>
+        <SearchBar value={this.state.search} onChange={this.searchChanged.bind(this)}/>
+        <SearchResults progress={this.state.progress} res={this.state.results}/>
       </div>
     );
   }

@@ -1,6 +1,9 @@
 // self.onmessage=function(e){postMessage('Worker: '+e.data);}
 import _ from "../lib/lodash.js"
 
+import RemoveSpecialChars from "./preprocessors/RemoveSpecialChars";
+import RemoveStopWords from "../core/preprocessors/RemoveStopWords";
+
 let items = [];
 
 let topMatches = {};
@@ -20,6 +23,14 @@ export default class CoreWorker {
     this.progressCbk = progressCbk;
 
     this.preprocessors = [];
+
+    this.preprocessorsClasses = {}
+    _.map(
+      [
+        RemoveSpecialChars,
+        RemoveStopWords
+      ],
+      cls => this.preprocessorsClasses[cls.name] = cls)
   }
 
   log(... msg) {
@@ -33,6 +44,7 @@ export default class CoreWorker {
   }
 
   search(regex) {
+    this.lastSearch = regex;
     if(!regex) {
       regex = /.*/g;
     }
@@ -133,7 +145,7 @@ export default class CoreWorker {
     _.each(data, (doc, index) => {
       try {
         let processedItem = doc;
-        _.each(this.preprocessors, preproc => processedItem = preproc.syncProcess(processedItem));
+        this.preprocessors.forEach(preproc => processedItem = preproc.syncProcess(processedItem));
         items.push(processedItem)
       } catch (err) {
         console.error(err, doc)
@@ -150,11 +162,17 @@ export default class CoreWorker {
 
   // Called by worker.js
   loadData(data) {
+    this.data = data;
     this.parseDataArray(data)
   }
 
-  setPreprocessors(preprocessors) {
-    this.preprocessors = preprocessors
+  // Called by worker.js
+  setPreprocessors(preprocessorsConfigs) {
+    this.preprocessors = _.map(_.filter(preprocessorsConfigs, c => c.enabled), config => {
+      return new this.preprocessorsClasses[config.className](config);
+    })
+    this.parseDataArray(this.data);
+    this.search(this.lastSearch);
   }
 }
 

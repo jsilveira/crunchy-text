@@ -25,13 +25,13 @@ import PreprocessorsSelector from "./PreprocessorsSelector";
 // Sample data loaded
 // parseDataObject(sampleData)
 
-function nonCircularObjectToString(doc) {
-  if (typeof doc === "object") {
-    return _.map(_.values(doc), doc => this.nonCircularObjectToString(doc)).join(" ||| ")
-  } else {
-    return (doc || "").toString()
-  }
-}
+// function nonCircularObjectToString(doc) {
+//   if (typeof doc === "object") {
+//     return _.map(_.values(doc), doc => this.nonCircularObjectToString(doc)).join(" ||| ")
+//   } else {
+//     return (doc || "").toString()
+//   }
+// }
 
 
 class DataLoader {
@@ -112,8 +112,8 @@ export default class InputBar extends Component {
     reader.readAsText(file);
   }
 
-  preprocessorsChanged() {
-    this.props.onChange(DataLoader.loadFileData(file, this.fileContent))
+  preprocessorsChanged(preprocessors) {
+    this.props.onPreprocessorChange(preprocessors)
   }
 
   render() {
@@ -140,7 +140,7 @@ export default class InputBar extends Component {
             </FileDrop>
           </div>
           <div className={'col-md-6 text-right'}>
-            <PreprocessorsSelector onChange={this.preprocessorsChanged}/>
+            <PreprocessorsSelector onChange={this.preprocessorsChanged.bind(this)}/>
           </div>
         </div>
       </div>

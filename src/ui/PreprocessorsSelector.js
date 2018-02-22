@@ -1,23 +1,24 @@
 import React, {Component} from 'react';
 
-import RemoveSpecialChars from "../core/preprocessors/RemoveSpecialChars";
-import RemoveStopWords from "../core/preprocessors/RemoveStopWords";
-
 export default class PreprocessorsSelector extends Component {
   constructor(props) {
     super(props);
     this.state = {
       preprocessors: [
-        new RemoveSpecialChars(),
-        new RemoveStopWords()
+        //TODO: Until parcel fixes https://github.com/parcel-bundler/parcel/issues/758, we cannot
+        // use the same class both here and the CoreWorker. So, a plain object is used
+        {name: 'RemoveSpecialChars', enabled: true},
+        {name: 'RemoveStopWords', enabled: true},
       ]
     };
+
+    props.onChange(this.state.preprocessors)
   }
 
   btnClick(preprocessor) {
-    debugger;
     preprocessor.enabled = !preprocessor.enabled
     this.setState({preprocessors: this.state.preprocessors})
+    this.props.onChange(this.state.preprocessors)
   }
 
   render() {

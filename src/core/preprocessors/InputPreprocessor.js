@@ -1,8 +1,9 @@
 export default class InputPreprocessor {
-  constructor(name) {
+  constructor(name, config) {
     this.name = name;
-    this.enabled = true;
+    this.config = { ... config};
   }
+
   syncProcess(input) {
     throw "Must be implemented by subclasses"
   }

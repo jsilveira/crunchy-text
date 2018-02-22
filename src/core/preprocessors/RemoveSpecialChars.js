@@ -1,5 +1,5 @@
-import InputPreprocessor from "./InputPreprocessor";
-
+// asdsad
+import InputPreprocessor from "./InputPreprocessor.js";
 
 const cleanupRegexes = [
   [new RegExp("[àáâãäå]", 'g'), "a"],
@@ -25,8 +25,8 @@ function removeDiacriticsCasero(s) {
 
 
 export default class RemoveSpecialChars extends InputPreprocessor {
-  constructor() {
-    super("Remove special chars")
+  constructor(config) {
+    super("Remove special chars", config)
   }
 
   syncProcess(input) {

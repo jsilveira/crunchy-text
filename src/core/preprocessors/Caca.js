@@ -40,7 +40,6 @@ const words = [
   "donde",
   "dos",
   "de",
-  "del",
   "el",
   "ellas",
   "ellos",
