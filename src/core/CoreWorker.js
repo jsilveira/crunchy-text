@@ -136,7 +136,7 @@ export default class CoreWorker {
     resume(0, regex.toString());
   }
 
-  parseDataArray(data){
+  preprocessData(data){
     this.sendProgress("loadProgress", "Preprocessing " + data.length + " strings...");
 
     let lastStatus = new Date();
@@ -145,6 +145,12 @@ export default class CoreWorker {
     _.each(data, (doc, index) => {
       try {
         let processedItem = doc;
+        if(!_.isString(processedItem)) {
+          if(_.isObject(processedItem)) {
+            processedItem = JSON.stringify(processedItem)
+          }
+        }
+
         this.preprocessors.forEach(preproc => processedItem = preproc.syncProcess(processedItem));
         items.push(processedItem)
       } catch (err) {
@@ -163,7 +169,7 @@ export default class CoreWorker {
   // Called by worker.js
   loadData(data) {
     this.data = data;
-    this.parseDataArray(data)
+    this.preprocessData(data)
   }
 
   // Called by worker.js
@@ -171,7 +177,7 @@ export default class CoreWorker {
     this.preprocessors = _.map(_.filter(preprocessorsConfigs, c => c.enabled), config => {
       return new this.preprocessorsClasses[config.className](config);
     })
-    this.parseDataArray(this.data);
+    this.preprocessData(this.data);
     this.search(this.lastSearch);
   }
 }
