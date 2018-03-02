@@ -7,8 +7,8 @@ export default class PreprocessorsSelector extends Component {
       preprocessors: [
         //TODO: Until parcel fixes https://github.com/parcel-bundler/parcel/issues/758, we cannot
         // use the same class both here and the CoreWorker. So, a plain object is used
-        {name: 'RemoveSpecialChars', enabled: true},
-        {name: 'RemoveStopWords', enabled: true},
+        {name: 'RemoveSpecialChars', enabled: false},
+        {name: 'RemoveStopWords', enabled: false},
       ]
     };
 
