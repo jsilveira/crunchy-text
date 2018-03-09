@@ -17,6 +17,14 @@ export default class SearchBar extends Component {
     }
   }
 
+  preventFormSubmitOnEnter(e) {
+    var keyCode = e.keyCode || e.which;
+    if (keyCode === 13) {
+      e.preventDefault();
+      return false;
+    }
+  }
+
   // changes from the outside
   componentWillReceiveProps(nextProps) {
     const value = nextProps.value;
@@ -30,7 +38,7 @@ export default class SearchBar extends Component {
       <div className="bg-dark container-fluid p-2">
         <div className="" id="navbarSupportedContent">
           <form className="my-0 my-lg-0">
-            <input type="search" placeholder="Search text with regex..." className="form-control" value={this.state.value} onChange={this.handleChange} />
+            <input type="search" placeholder="Search text with regex..." onKeyDown={this.preventFormSubmitOnEnter} className="form-control" value={this.state.value} onChange={this.handleChange} />
           </form>
         </div>
       </div>
