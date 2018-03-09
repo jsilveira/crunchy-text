@@ -39,7 +39,7 @@ export default class TextFlow extends Component {
 
   search() {
     try {
-      coreWorker.search(new RegExp(this.state.search, 'ig'));
+      coreWorker.search(new RegExp(this.state.search, 'igm'));
     } catch (err) {
       this.setState({invalidInput: true})
     }
