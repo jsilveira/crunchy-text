@@ -38,12 +38,20 @@ export default class CoreWorkerProxy {
     return await this.proxyCall('search', searchObj)
   }
 
+  async drilldownAction(... params) {
+    return await this.proxyCall('drilldownAction', ... params)
+  }
+
   onSearchDone(cbk) {
     this.onMsg('searchDone', cbk)
   }
 
   onLoadProgress(cbk) {
     this.onMsg('loadProgress',cbk)
+  }
+
+  onDrilldownStepsUpdate(cbk) {
+    this.onMsg('drilldownStepsUpdate',cbk)
   }
 
   onMsg(msg, cbk) {

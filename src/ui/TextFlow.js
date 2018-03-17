@@ -4,6 +4,7 @@ import InputBar from './InputBar.js';
 import SearchBar from './SearchBar.js';
 import SearchResults from './SearchResults.js';
 import CoreWorkerProxy from "../core/CoreWorkerProxy";
+import DrilldownFiltersBar from "./DrilldownFiltersBar";
 
 //const sampleURL = 'https://raw.githubusercontent.com/lutangar/cities.json/master/cities.json';
 const sampleData = require('../../public/samples/sample-data.json');
@@ -21,6 +22,7 @@ export default class TextFlow extends Component {
       textInput: [],
       search: 'de \\w+',
       results: null,
+      drillDownSteps: [],
       inputSettings: null,
       stats: {}
     };
@@ -35,6 +37,7 @@ export default class TextFlow extends Component {
 
     coreWorker.onLoadProgress(progress => this.setState({progress}))
     coreWorker.onSearchDone((results) => this.setState({results, stats: results.stats, progress: ""}))
+    coreWorker.onDrilldownStepsUpdate(steps => this.setState({drillDownSteps: steps}))
   }
 
   search() {
@@ -62,6 +65,15 @@ export default class TextFlow extends Component {
     this.setState({search}, () => this.search())
   }
 
+  drilldownAction(actionName, ... params) {
+    coreWorker.drilldownAction(actionName, ... params);
+
+    if(actionName === "addFilter" || actionName === "addExclusion") {
+      this.setState({search: ""})
+      setTimeout(() => this.search(), 20)
+    }
+  }
+
   render() {
     return (
       <div>
@@ -69,6 +81,7 @@ export default class TextFlow extends Component {
                   onChange={this.textInputChanged.bind(this)}
                   onPreprocessorChange={this.preprocessorsChanged.bind(this)}/>
         <SearchBar value={this.state.search} onChange={this.searchChanged.bind(this)}/>
+        <DrilldownFiltersBar drilldownSteps={this.state.drillDownSteps} onDrilldownAction={this.drilldownAction.bind(this)}/>
         <SearchResults progress={this.state.progress} res={this.state.results}/>
       </div>
     );
