@@ -33,3 +33,7 @@ mark {
     margin-left: -1px;
     background-color: yellow;
 }
+
+.drilldown-filters-bar {
+    zoom: 0.8;
+}

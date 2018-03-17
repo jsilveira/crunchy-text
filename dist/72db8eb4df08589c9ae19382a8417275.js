@@ -185,7 +185,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],29:[function(require,module,exports) {
+},{}],32:[function(require,module,exports) {
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -278,7 +278,7 @@ module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],22:[function(require,module,exports) {
+},{}],23:[function(require,module,exports) {
 
 var global = (1,eval)("this");
 /*!
@@ -2071,7 +2071,7 @@ function isnan (val) {
   return val !== val // eslint-disable-line no-self-compare
 }
 
-},{"base64-js":31,"ieee754":29,"isarray":30,"buffer":22}],17:[function(require,module,exports) {
+},{"base64-js":31,"ieee754":32,"isarray":30,"buffer":23}],18:[function(require,module,exports) {
 var global = (1,eval)("this");
 var Buffer = require("buffer").Buffer;
 'use strict';
@@ -18864,7 +18864,7 @@ var Buffer = require("buffer").Buffer;
       root._ = _;
     }
 }).call(undefined);
-},{"buffer":22}],23:[function(require,module,exports) {
+},{"buffer":23}],28:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18884,7 +18884,7 @@ class InputPreprocessor {
   }
 }
 exports.default = InputPreprocessor;
-},{}],18:[function(require,module,exports) {
+},{}],20:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18918,7 +18918,7 @@ class RemoveSpecialChars extends _InputPreprocessor2.default {
   }
 }
 exports.default = RemoveSpecialChars;
-},{"./InputPreprocessor.js":23}],19:[function(require,module,exports) {
+},{"./InputPreprocessor.js":28}],21:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18947,7 +18947,7 @@ class RemoveStopWords extends _InputPreprocessor2.default {
   }
 }
 exports.default = RemoveStopWords;
-},{"./InputPreprocessor":23}],16:[function(require,module,exports) {
+},{"./InputPreprocessor":28}],17:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18970,6 +18970,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 let items = []; // self.onmessage=function(e){postMessage('Worker: '+e.data);}
 
+let filteredItems = [];
 
 let topMatches = {};
 let partial = false;
@@ -18981,12 +18982,15 @@ let nextTick = 0;
 
 let re = new RegExp(/.*/g);
 
+let filterCount = 1;
+
 class CoreWorker {
   constructor(loggerCbk, progressCbk) {
     this.loggerFn = loggerCbk;
     this.progressCbk = progressCbk;
 
     this.preprocessors = [];
+    this.drilldownActions = [];
 
     this.preprocessorsClasses = {};
     _lodash2.default.map([_RemoveSpecialChars2.default, _RemoveStopWords2.default], cls => this.preprocessorsClasses[cls.name] = cls);
@@ -19008,7 +19012,7 @@ class CoreWorker {
       regex = /.*/g;
     }
 
-    if (items.length === 0) return;
+    if (filteredItems.length === 0) return;
     re = regex;
 
     searching = true;
@@ -19023,9 +19027,8 @@ class CoreWorker {
 
     const resume = (START, query) => {
       let i = 0;
-      for (i = START; i < items.length; i++) {
-        const den = items[i];
-        const itemText = (den || "").toString();
+      for (i = START; i < filteredItems.length; i++) {
+        const itemText = filteredItems[i];
 
         let execRes = null;
         let matches = [];
@@ -19053,7 +19056,7 @@ class CoreWorker {
             lastPause = new Date();
             START = i;
 
-            this.sendProgress("loadProgress", `Searching ${(START / items.length * 100).toFixed(0)}%`);
+            this.sendProgress("loadProgress", `Searching ${(START / filteredItems.length * 100).toFixed(0)}%`);
             // partial = true;
             // finalTopMatches = _.sortBy(_.toPairs(JSON.parse(JSON.stringify(topMatches))), "1").reverse();
             // sendProgress(q);
@@ -19069,7 +19072,7 @@ class CoreWorker {
         }
       }
 
-      if (i < items.length) {
+      if (i < filteredItems.length) {
         nextTick = setTimeout(() => resume(START, query), 0);
       } else {
         topMatches = _lodash2.default.sortBy(_lodash2.default.toPairs(topMatches), "1").reverse();
@@ -19082,7 +19085,7 @@ class CoreWorker {
           stats: {
             searchTime: lastSearchTime,
             matchesCount: this.matchesIndex.length,
-            totalCount: items.length
+            totalCount: filteredItems.length
           },
           extras: { topMatches }
         });
@@ -19110,7 +19113,7 @@ class CoreWorker {
         }
 
         this.preprocessors.forEach(preproc => processedItem = preproc.syncProcess(processedItem));
-        items.push(processedItem);
+        items.push((processedItem || "").toString());
       } catch (err) {
         console.error(err, doc);
       }
@@ -19122,6 +19125,42 @@ class CoreWorker {
     });
 
     this.sendProgress("loadProgress", "Done parsing and preprocessing data.");
+
+    this.applyDrilldownFilters();
+  }
+
+  applyDrilldownFilters() {
+    this.sendProgress("loadProgress", "Building prefiltered data set strings...");
+    let lastStatus = new Date();
+
+    if (this.drilldownActions.length === 0) {
+      filteredItems = items;
+      return;
+    }
+
+    filteredItems = [];
+
+    _lodash2.default.each(items, (doc, index) => {
+      if (new Date() - lastStatus > 100) {
+        this.sendProgress("loadProgress", "Preprocessing " + items.length + " strings... (" + (100 * index / items.length).toFixed(1) + "%)");
+        lastStatus = new Date();
+      }
+
+      for (let step of this.drilldownActions) {
+        if (!step.isOn) continue;
+
+        let matched = step.regex.test(doc);
+
+        step.regex.lastIndex = 0; // REset the regex just in case multiple matches, as it has global flag
+        if (step.type === "filter" && !matched) return;
+
+        if (step.type === "exclude" && matched) return;
+      }
+
+      filteredItems.push(doc);
+    });
+
+    this.sendProgress("loadProgress", "Done prefiltering data.");
   }
 
   // Called by worker.js
@@ -19138,9 +19177,38 @@ class CoreWorker {
     this.preprocessData(this.data);
     this.search(this.lastSearch);
   }
+
+  // Called by worker.js
+  drilldownAction(action, ...params) {
+    if (action === 'addFilter' || action === 'addExclusion') {
+      if (!this.lastSearch) return;
+
+      this.drilldownActions.push({
+        searchQuery: this.lastSearch.toString(),
+        regex: this.lastSearch,
+        isOn: true,
+        type: action === 'addFilter' ? 'filter' : 'exclude',
+        affectedCount: 50,
+        id: filterCount++
+      });
+    } else if (action === 'toggleFilter') {
+      let [filterId] = params;
+      let step = _lodash2.default.find(this.drilldownActions, { id: filterId });
+      if (step) {
+        step.isOn = !step.isOn;
+      }
+    } else if (action === 'remove') {
+      let [filterId] = params;
+      _lodash2.default.remove(this.drilldownActions, s => s.id === filterId);
+    }
+
+    this.sendProgress('drilldownStepsUpdate', this.drilldownActions);
+    this.applyDrilldownFilters();
+    this.search(this.lastSearch);
+  }
 }
 exports.default = CoreWorker;
-},{"../lib/lodash.js":17,"./preprocessors/RemoveSpecialChars":18,"../core/preprocessors/RemoveStopWords":19}],14:[function(require,module,exports) {
+},{"../lib/lodash.js":18,"./preprocessors/RemoveSpecialChars":20,"../core/preprocessors/RemoveStopWords":21}],15:[function(require,module,exports) {
 "use strict";
 
 var _CoreWorker = require("./core/CoreWorker");
@@ -19162,7 +19230,7 @@ self.addEventListener('message', function ({ data }) {
     console.error("Unknown message action", data);
   }
 }, false);
-},{"./core/CoreWorker":16}],56:[function(require,module,exports) {
+},{"./core/CoreWorker":17}],57:[function(require,module,exports) {
 
 var global = (1, eval)('this');
 var OldModule = module.bundle.Module;
@@ -19182,7 +19250,7 @@ module.bundle.Module = Module;
 
 if (!module.bundle.parent && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
-  var ws = new WebSocket('ws://' + hostname + ':' + '51434' + '/');
+  var ws = new WebSocket('ws://' + hostname + ':' + '58513' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 
@@ -19283,5 +19351,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.require, id);
   });
 }
-},{}]},{},[56,14])
+},{}]},{},[57,15])
 //# sourceMappingURL=/dist/72db8eb4df08589c9ae19382a8417275.map
