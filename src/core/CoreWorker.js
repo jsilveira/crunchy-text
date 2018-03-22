@@ -246,6 +246,9 @@ export default class CoreWorker {
       }
     } else if(action === 'remove') {
       let [filterId] = params;
+      if(!filterId && this.drilldownActions.length) {
+        filterId = this.drilldownActions[this.drilldownActions.length - 1].id
+      }
       _.remove(this.drilldownActions, s => s.id === filterId)
     }
 

@@ -80,7 +80,7 @@ export default class TextFlow extends Component {
         <InputBar value={this.state.inputSettings}
                   onChange={this.textInputChanged.bind(this)}
                   onPreprocessorChange={this.preprocessorsChanged.bind(this)}/>
-        <SearchBar value={this.state.search} onChange={this.searchChanged.bind(this)}/>
+        <SearchBar value={this.state.search} onChange={this.searchChanged.bind(this)} onDrilldownAction={this.drilldownAction.bind(this)}/>
         <DrilldownFiltersBar drilldownSteps={this.state.drillDownSteps} onDrilldownAction={this.drilldownAction.bind(this)}/>
         <SearchResults progress={this.state.progress} res={this.state.results}/>
       </div>

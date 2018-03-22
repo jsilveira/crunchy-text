@@ -19,9 +19,22 @@ export default class SearchBar extends Component {
 
   preventFormSubmitOnEnter(e) {
     var keyCode = e.keyCode || e.which;
-    if (keyCode === 13) {
+    let KEYCODE_ENTER = 13;
+    let KEYCODE_BACKSPACE = 8;
+
+    if (keyCode === KEYCODE_ENTER) {
+      if(e.shiftKey && this.state.value) {
+        this.props.onDrilldownAction('addFilter');
+      }
+      if(e.ctrlKey && this.state.value) {
+        this.props.onDrilldownAction('addExclusion');
+      }
       e.preventDefault();
       return false;
+    }
+
+    if(keyCode === KEYCODE_BACKSPACE && !this.state.value) {
+      this.props.onDrilldownAction('remove');
     }
   }
 
@@ -38,7 +51,7 @@ export default class SearchBar extends Component {
       <div className="bg-dark container-fluid p-2">
         <div className="" id="navbarSupportedContent">
           <form className="my-0 my-lg-0">
-            <input type="search" placeholder="Search text with regex..." onKeyDown={this.preventFormSubmitOnEnter} className="form-control" value={this.state.value} onChange={this.handleChange} />
+            <input type="search" placeholder="Search text with regex..." onKeyDown={this.preventFormSubmitOnEnter.bind(this)} className="form-control" value={this.state.value} onChange={this.handleChange} />
           </form>
         </div>
       </div>

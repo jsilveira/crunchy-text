@@ -43,10 +43,7 @@ export default class DrilldownFiltersBar extends Component {
 
   render() {
     let steps = this.props.drilldownSteps;
-    /*[
-      {searchQuery: "hola", type: 'filter', isOn: true, affectedCount: 30},
-      // {searchQuery: "amigo", type: 'filter',isOn: false, affectedCount: 5}
-    ]*/
+
     let filterSteps = steps.map((step, i) => {
       let {searchQuery, isOn, type, affectedCount} = step;
       let typeIcon = <i className="material-icons align-middle">{ type === 'filter' ? 'filter_list' : 'remove_circle' }</i>
@@ -54,12 +51,11 @@ export default class DrilldownFiltersBar extends Component {
       return <span key={i}>
         <span className={`btn btn-sm btn-${isOn ? baseColor : 'outline-'+baseColor}`}  onClick={this.toggleFilter.bind(this, step)}>
           { typeIcon }&nbsp;
-          {searchQuery} {isOn ? `(${affectedCount})`: ''}
+          {searchQuery.replace(/[igm]+$/, '')} {isOn ? `(${affectedCount})`: ''}
         </span>
         <span className={'btn btn-sm btn-link p0 pl-0'} onClick={this.removeStep.bind(this, step)}>
           <i className="material-icons">close</i>
         </span>
-        {/*<i className="material-icons align-middle">chevron_right</i>*/}
       </span>
     });
 
@@ -77,10 +73,12 @@ export default class DrilldownFiltersBar extends Component {
           <span className={'btn btn-link'} onClick={this.addFilter.bind(this)}>
             <i className="material-icons align-middle pr-1">filter_list</i>
             Search within results
+            &nbsp;<span className='badge badge-light'>Shift+Ent</span>
           </span>
           <span className={'btn btn-link'}  onClick={this.addExclusion.bind(this)}>
             <i className="material-icons align-middle pr-1">remove_circle_outline</i>
             Exclude results
+            &nbsp;<span className='badge badge-light'>Ctrl+Ent</span>
           </span>
           <span className={'text-white'}>
           </span>
