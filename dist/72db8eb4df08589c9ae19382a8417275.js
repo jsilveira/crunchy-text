@@ -69,7 +69,7 @@ require = (function (modules, cache, entry) {
 
   // Override the current require with this new one
   return newRequire;
-})({31:[function(require,module,exports) {
+})({55:[function(require,module,exports) {
 'use strict'
 
 exports.byteLength = byteLength
@@ -185,7 +185,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],32:[function(require,module,exports) {
+},{}],56:[function(require,module,exports) {
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -271,14 +271,14 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],30:[function(require,module,exports) {
+},{}],54:[function(require,module,exports) {
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],23:[function(require,module,exports) {
+},{}],50:[function(require,module,exports) {
 
 var global = (1,eval)("this");
 /*!
@@ -2071,7 +2071,7 @@ function isnan (val) {
   return val !== val // eslint-disable-line no-self-compare
 }
 
-},{"base64-js":31,"ieee754":32,"isarray":30,"buffer":23}],18:[function(require,module,exports) {
+},{"base64-js":55,"ieee754":56,"isarray":54,"buffer":50}],44:[function(require,module,exports) {
 var global = (1,eval)("this");
 var Buffer = require("buffer").Buffer;
 'use strict';
@@ -18864,7 +18864,7 @@ var Buffer = require("buffer").Buffer;
       root._ = _;
     }
 }).call(undefined);
-},{"buffer":23}],28:[function(require,module,exports) {
+},{"buffer":50}],51:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18884,7 +18884,7 @@ class InputPreprocessor {
   }
 }
 exports.default = InputPreprocessor;
-},{}],20:[function(require,module,exports) {
+},{}],46:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18918,7 +18918,7 @@ class RemoveSpecialChars extends _InputPreprocessor2.default {
   }
 }
 exports.default = RemoveSpecialChars;
-},{"./InputPreprocessor.js":28}],21:[function(require,module,exports) {
+},{"./InputPreprocessor.js":51}],47:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18947,7 +18947,7 @@ class RemoveStopWords extends _InputPreprocessor2.default {
   }
 }
 exports.default = RemoveStopWords;
-},{"./InputPreprocessor":28}],17:[function(require,module,exports) {
+},{"./InputPreprocessor":51}],42:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -19199,6 +19199,9 @@ class CoreWorker {
       }
     } else if (action === 'remove') {
       let [filterId] = params;
+      if (!filterId && this.drilldownActions.length) {
+        filterId = this.drilldownActions[this.drilldownActions.length - 1].id;
+      }
       _lodash2.default.remove(this.drilldownActions, s => s.id === filterId);
     }
 
@@ -19208,7 +19211,7 @@ class CoreWorker {
   }
 }
 exports.default = CoreWorker;
-},{"../lib/lodash.js":18,"./preprocessors/RemoveSpecialChars":20,"../core/preprocessors/RemoveStopWords":21}],15:[function(require,module,exports) {
+},{"../lib/lodash.js":44,"./preprocessors/RemoveSpecialChars":46,"../core/preprocessors/RemoveStopWords":47}],33:[function(require,module,exports) {
 "use strict";
 
 var _CoreWorker = require("./core/CoreWorker");
@@ -19230,7 +19233,7 @@ self.addEventListener('message', function ({ data }) {
     console.error("Unknown message action", data);
   }
 }, false);
-},{"./core/CoreWorker":17}],57:[function(require,module,exports) {
+},{"./core/CoreWorker":42}],80:[function(require,module,exports) {
 
 var global = (1, eval)('this');
 var OldModule = module.bundle.Module;
@@ -19250,7 +19253,7 @@ module.bundle.Module = Module;
 
 if (!module.bundle.parent && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
-  var ws = new WebSocket('ws://' + hostname + ':' + '58513' + '/');
+  var ws = new WebSocket('ws://' + hostname + ':' + '62179' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 
@@ -19351,5 +19354,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.require, id);
   });
 }
-},{}]},{},[57,15])
+},{}]},{},[80,33])
 //# sourceMappingURL=/dist/72db8eb4df08589c9ae19382a8417275.map
