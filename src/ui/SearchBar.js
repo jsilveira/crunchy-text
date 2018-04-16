@@ -33,7 +33,7 @@ export default class SearchBar extends Component {
       return false;
     }
 
-    if(keyCode === KEYCODE_BACKSPACE && !this.state.value) {
+    if(keyCode === KEYCODE_BACKSPACE && e.shiftKey && !this.state.value) {
       this.props.onDrilldownAction('remove');
     }
   }

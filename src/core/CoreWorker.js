@@ -182,6 +182,11 @@ export default class CoreWorker {
 
     filteredItems = [];
 
+    // REset affected items count
+    for (let step of this.drilldownActions) {
+      step.affectedCount = 0;
+    }
+
     _.each(items, (doc, index) => {
       if (new Date() - lastStatus > 100) {
         this.sendProgress("loadProgress", "Preprocessing " + items.length + " strings... (" + (100 * index / items.length).toFixed(1) + "%)");
@@ -193,6 +198,10 @@ export default class CoreWorker {
           continue;
 
         let matched = step.regex.test(doc);
+
+        if(matched) {
+          step.affectedCount++;
+        }
 
         step.regex.lastIndex = 0; // REset the regex just in case multiple matches, as it has global flag
         if(step.type === "filter" && !matched)
@@ -235,7 +244,7 @@ export default class CoreWorker {
         regex: this.lastSearch,
         isOn: true,
         type: action === 'addFilter' ? 'filter' : 'exclude',
-        affectedCount: 50,
+        affectedCount: 0,
         id: filterCount++
       });
     } else if(action === 'toggleFilter') {
@@ -252,8 +261,8 @@ export default class CoreWorker {
       _.remove(this.drilldownActions, s => s.id === filterId)
     }
 
-    this.sendProgress('drilldownStepsUpdate', this.drilldownActions)
     this.applyDrilldownFilters();
+    this.sendProgress('drilldownStepsUpdate', this.drilldownActions)
     this.search(this.lastSearch);
   }
 }
