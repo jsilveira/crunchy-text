@@ -18884,7 +18884,7 @@ class InputPreprocessor {
   }
 }
 exports.default = InputPreprocessor;
-},{}],46:[function(require,module,exports) {
+},{}],45:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18918,7 +18918,7 @@ class RemoveSpecialChars extends _InputPreprocessor2.default {
   }
 }
 exports.default = RemoveSpecialChars;
-},{"./InputPreprocessor.js":51}],47:[function(require,module,exports) {
+},{"./InputPreprocessor.js":51}],46:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -19140,6 +19140,11 @@ class CoreWorker {
 
     filteredItems = [];
 
+    // REset affected items count
+    for (let step of this.drilldownActions) {
+      step.affectedCount = 0;
+    }
+
     _lodash2.default.each(items, (doc, index) => {
       if (new Date() - lastStatus > 100) {
         this.sendProgress("loadProgress", "Preprocessing " + items.length + " strings... (" + (100 * index / items.length).toFixed(1) + "%)");
@@ -19150,6 +19155,10 @@ class CoreWorker {
         if (!step.isOn) continue;
 
         let matched = step.regex.test(doc);
+
+        if (matched) {
+          step.affectedCount++;
+        }
 
         step.regex.lastIndex = 0; // REset the regex just in case multiple matches, as it has global flag
         if (step.type === "filter" && !matched) return;
@@ -19188,7 +19197,7 @@ class CoreWorker {
         regex: this.lastSearch,
         isOn: true,
         type: action === 'addFilter' ? 'filter' : 'exclude',
-        affectedCount: 50,
+        affectedCount: 0,
         id: filterCount++
       });
     } else if (action === 'toggleFilter') {
@@ -19205,13 +19214,13 @@ class CoreWorker {
       _lodash2.default.remove(this.drilldownActions, s => s.id === filterId);
     }
 
-    this.sendProgress('drilldownStepsUpdate', this.drilldownActions);
     this.applyDrilldownFilters();
+    this.sendProgress('drilldownStepsUpdate', this.drilldownActions);
     this.search(this.lastSearch);
   }
 }
 exports.default = CoreWorker;
-},{"../lib/lodash.js":44,"./preprocessors/RemoveSpecialChars":46,"../core/preprocessors/RemoveStopWords":47}],33:[function(require,module,exports) {
+},{"../lib/lodash.js":44,"./preprocessors/RemoveSpecialChars":45,"../core/preprocessors/RemoveStopWords":46}],32:[function(require,module,exports) {
 "use strict";
 
 var _CoreWorker = require("./core/CoreWorker");
@@ -19253,7 +19262,7 @@ module.bundle.Module = Module;
 
 if (!module.bundle.parent && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
-  var ws = new WebSocket('ws://' + hostname + ':' + '62179' + '/');
+  var ws = new WebSocket('ws://' + hostname + ':' + '64207' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 
@@ -19354,5 +19363,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.require, id);
   });
 }
-},{}]},{},[80,33])
+},{}]},{},[80,32])
 //# sourceMappingURL=/dist/72db8eb4df08589c9ae19382a8417275.map
