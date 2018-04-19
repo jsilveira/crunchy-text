@@ -69,7 +69,7 @@ require = (function (modules, cache, entry) {
 
   // Override the current require with this new one
   return newRequire;
-})({55:[function(require,module,exports) {
+})({31:[function(require,module,exports) {
 'use strict'
 
 exports.byteLength = byteLength
@@ -185,7 +185,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],56:[function(require,module,exports) {
+},{}],32:[function(require,module,exports) {
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -271,14 +271,14 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],54:[function(require,module,exports) {
+},{}],30:[function(require,module,exports) {
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],50:[function(require,module,exports) {
+},{}],24:[function(require,module,exports) {
 
 var global = (1,eval)("this");
 /*!
@@ -2071,7 +2071,7 @@ function isnan (val) {
   return val !== val // eslint-disable-line no-self-compare
 }
 
-},{"base64-js":55,"ieee754":56,"isarray":54,"buffer":50}],44:[function(require,module,exports) {
+},{"base64-js":31,"ieee754":32,"isarray":30,"buffer":24}],18:[function(require,module,exports) {
 var global = (1,eval)("this");
 var Buffer = require("buffer").Buffer;
 'use strict';
@@ -18864,7 +18864,7 @@ var Buffer = require("buffer").Buffer;
       root._ = _;
     }
 }).call(undefined);
-},{"buffer":50}],51:[function(require,module,exports) {
+},{"buffer":24}],23:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18884,7 +18884,7 @@ class InputPreprocessor {
   }
 }
 exports.default = InputPreprocessor;
-},{}],45:[function(require,module,exports) {
+},{}],20:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18918,7 +18918,7 @@ class RemoveSpecialChars extends _InputPreprocessor2.default {
   }
 }
 exports.default = RemoveSpecialChars;
-},{"./InputPreprocessor.js":51}],46:[function(require,module,exports) {
+},{"./InputPreprocessor.js":23}],19:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18947,7 +18947,7 @@ class RemoveStopWords extends _InputPreprocessor2.default {
   }
 }
 exports.default = RemoveStopWords;
-},{"./InputPreprocessor":51}],42:[function(require,module,exports) {
+},{"./InputPreprocessor":23}],17:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -19044,7 +19044,7 @@ class CoreWorker {
 
         if (matches.length > 0) {
           this.matchesIndex.push(i);
-          if (sampleMatches.length < 2000) {
+          if (sampleMatches.length < 100000) {
             sampleMatches.push({ itemText, matches: matches });
           }
         }
@@ -19080,6 +19080,11 @@ class CoreWorker {
         searching = false;
         lastSearchTime = new Date().valueOf() - startTime;
 
+        // TODO: Needed for download results. Stop doing this EVERY TIME
+        // and only do it, searching again, if someone clicks export results
+        // Then change `if (sampleMatches.length < 100000) {` to `< 2000`
+        this.lastFilteredResults = sampleMatches.slice(0, 2000);
+
         this.sendProgress('searchDone', {
           matchSamples: sampleMatches.slice(0, 2000),
           stats: {
@@ -19095,6 +19100,10 @@ class CoreWorker {
     clearTimeout(nextTick);
 
     resume(0, regex.toString());
+  }
+
+  async getFilteredData() {
+    return this.lastFilteredResults;
   }
 
   preprocessData(data) {
@@ -19220,10 +19229,10 @@ class CoreWorker {
   }
 }
 exports.default = CoreWorker;
-},{"../lib/lodash.js":44,"./preprocessors/RemoveSpecialChars":45,"../core/preprocessors/RemoveStopWords":46}],32:[function(require,module,exports) {
-"use strict";
+},{"../lib/lodash.js":18,"./preprocessors/RemoveSpecialChars":20,"../core/preprocessors/RemoveStopWords":19}],15:[function(require,module,exports) {
+'use strict';
 
-var _CoreWorker = require("./core/CoreWorker");
+var _CoreWorker = require('./core/CoreWorker');
 
 var _CoreWorker2 = _interopRequireDefault(_CoreWorker);
 
@@ -19235,14 +19244,15 @@ const worker = new _CoreWorker2.default((...msg) => {
   self.postMessage({ msg, payload });
 });
 
-self.addEventListener('message', function ({ data }) {
+self.addEventListener('message', async function ({ data }) {
   if (data.method) {
-    worker[data.method](...data.args);
+    let res = await worker[data.method](...data.args);
+    self.postMessage({ msg: 'proxyCallResponse', payload: { callId: data.callId, res } });
   } else {
     console.error("Unknown message action", data);
   }
 }, false);
-},{"./core/CoreWorker":42}],80:[function(require,module,exports) {
+},{"./core/CoreWorker":17}],57:[function(require,module,exports) {
 
 var global = (1, eval)('this');
 var OldModule = module.bundle.Module;
@@ -19262,7 +19272,7 @@ module.bundle.Module = Module;
 
 if (!module.bundle.parent && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
-  var ws = new WebSocket('ws://' + hostname + ':' + '64207' + '/');
+  var ws = new WebSocket('ws://' + hostname + ':' + '52935' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 
@@ -19363,5 +19373,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.require, id);
   });
 }
-},{}]},{},[80,32])
+},{}]},{},[57,15])
 //# sourceMappingURL=/dist/72db8eb4df08589c9ae19382a8417275.map

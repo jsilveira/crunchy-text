@@ -37,3 +37,7 @@ mark {
 .drilldown-filters-bar {
     zoom: 0.8;
 }
+
+.zoom-small {
+    zoom: 0.8;
+}
