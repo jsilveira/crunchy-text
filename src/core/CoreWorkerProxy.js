@@ -10,6 +10,8 @@ export default class CoreWorkerProxy {
 
     this.msgCbks = {}
 
+    this.pendingCalls = {}
+
     // Test, used in all examples:
     this.worker.onmessage = ({data}) => {
       if(data.msg && this.msgCbks[data.msg]) {
@@ -19,11 +21,21 @@ export default class CoreWorkerProxy {
       }
     };
 
+    this.onMsg('proxyCallResponse', ({callId, res}) => {
+      if(callId && this.pendingCalls[callId]) {
+        this.pendingCalls[callId](res);
+      }
+    })
     // this.worker.onerror(err => alert(err))
   }
 
   async proxyCall(method, ... args) {
-    this.worker.postMessage({method, args})
+    const callId = "call"+Math.random()+"-"+new Date()
+    const responsePromise = new Promise((resolve, reject) => {
+      this.pendingCalls[callId] = resolve;
+    });
+    this.worker.postMessage({method, args, callId})
+    return responsePromise;
   }
 
   async loadData(data) {
@@ -40,6 +52,10 @@ export default class CoreWorkerProxy {
 
   async drilldownAction(... params) {
     return await this.proxyCall('drilldownAction', ... params)
+  }
+
+  async getFilteredData(... params) {
+    return await this.proxyCall('getFilteredData', ... params)
   }
 
   onSearchDone(cbk) {

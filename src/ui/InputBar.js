@@ -105,7 +105,7 @@ export default class InputBar extends Component {
 
       if (this.props.onChange) {
         this.fileContent = reader.result;
-        this.props.onChange(DataLoader.loadFileData(file, this.fileContent))
+        this.props.onChange({name: file.name, data: DataLoader.loadFileData(file, this.fileContent)})
       }
     };
     // Read in the image file as a binary string.

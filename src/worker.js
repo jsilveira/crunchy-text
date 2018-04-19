@@ -6,9 +6,10 @@ const worker = new CoreWorker((...msg) => {
   self.postMessage({msg, payload})
 });
 
-self.addEventListener('message', function({data}) {
+self.addEventListener('message', async function({data}) {
   if (data.method) {
-    worker[data.method](... (data.args))
+    let res = await worker[data.method](... (data.args))
+    self.postMessage({msg: 'proxyCallResponse', payload: {callId: data.callId, res}});
   } else {
     console.error("Unknown message action", data);
   }

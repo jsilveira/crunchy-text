@@ -19,7 +19,7 @@ export default class TextFlow extends Component {
   constructor() {
     super();
     this.state = {
-      textInput: [],
+      textInput: {name: 'sample', data: []},
       search: 'de \\w+',
       results: null,
       drillDownSteps: [],
@@ -51,7 +51,7 @@ export default class TextFlow extends Component {
   textInputChanged(textInput) {
     this.setState({textInput})
     console.log("Sending data to worker")
-    coreWorker.loadData(textInput);
+    coreWorker.loadData(textInput.data);
     console.log("Sending data DONE")
     this.search()
   }
@@ -63,6 +63,24 @@ export default class TextFlow extends Component {
 
   searchChanged(search) {
     this.setState({search}, () => this.search())
+  }
+
+  async downloadResults() {
+    function downloadFile(content, fileName, contentType) {
+      const a = document.createElement("a");
+      const file = new Blob([content], {type: contentType});
+      a.href = URL.createObjectURL(file);
+      a.download = fileName;
+      a.click();
+      a.remove();
+    }
+
+    const data = await coreWorker.getFilteredData();
+    const exportedData = data.map(({itemText}) => itemText);
+
+    let fileName = `${this.state.textInput.name}-filtered.json`;
+    debugger;
+    downloadFile(JSON.stringify(exportedData, true, 4), fileName, 'text/plain');
   }
 
   drilldownAction(actionName, ... params) {
@@ -82,7 +100,7 @@ export default class TextFlow extends Component {
                   onPreprocessorChange={this.preprocessorsChanged.bind(this)}/>
         <SearchBar value={this.state.search} onChange={this.searchChanged.bind(this)} onDrilldownAction={this.drilldownAction.bind(this)}/>
         <DrilldownFiltersBar drilldownSteps={this.state.drillDownSteps} onDrilldownAction={this.drilldownAction.bind(this)}/>
-        <SearchResults progress={this.state.progress} res={this.state.results}/>
+        <SearchResults progress={this.state.progress} res={this.state.results} onDownloadResults={this.downloadResults.bind(this)}/>
       </div>
     );
   }

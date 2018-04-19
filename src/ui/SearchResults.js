@@ -46,10 +46,19 @@ export default class SearchResults extends Component {
       <div className="container-fluid">
         <div className={"row"}>
           <div className={"col-9 p-4"}>
-            <h5>
-              {stats.matchesCount} matches &nbsp;
-              <em className={"text-info"}>{status}</em>
-            </h5>
+            <div className={"row"}>
+              <div className={"col-9 p-0"}>
+                <h5>
+                  {stats.matchesCount} matches &nbsp;
+                  <em className={"text-info"}>{status}</em>
+                </h5>
+              </div>
+              <div className={"col-3 p-0 text-right zoom-small"}>
+               <span className='btn btn-sm btn-link' onClick={this.props.onDownloadResults} title={`Download ${stats.matchesCount} results as json`}>
+                 <i className="material-icons align-middle">file_download</i>
+                </span>
+              </div>
+            </div>
             <table className={"ResultsTable"}>
               <tbody>
               {results}

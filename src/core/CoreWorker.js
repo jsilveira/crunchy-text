@@ -86,7 +86,7 @@ export default class CoreWorker {
 
         if(matches.length > 0) {
           this.matchesIndex.push(i);
-          if (sampleMatches.length < 2000) {
+          if (sampleMatches.length < 100000) {
             sampleMatches.push({itemText, matches: matches});
           }
         }
@@ -122,6 +122,11 @@ export default class CoreWorker {
         searching = false;
         lastSearchTime = new Date().valueOf() - startTime;
 
+        // TODO: Needed for download results. Stop doing this EVERY TIME
+        // and only do it, searching again, if someone clicks export results
+        // Then change `if (sampleMatches.length < 100000) {` to `< 2000`
+        this.lastFilteredResults = sampleMatches.slice(0,2000);
+
         this.sendProgress('searchDone', {
           matchSamples: sampleMatches.slice(0, 2000),
           stats: {
@@ -137,6 +142,10 @@ export default class CoreWorker {
     clearTimeout(nextTick);
 
     resume(0, regex.toString());
+  }
+
+  async getFilteredData() {
+    return this.lastFilteredResults;
   }
 
   preprocessData(data){
