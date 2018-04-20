@@ -271,14 +271,14 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],30:[function(require,module,exports) {
+},{}],33:[function(require,module,exports) {
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],24:[function(require,module,exports) {
+},{}],28:[function(require,module,exports) {
 
 var global = (1,eval)("this");
 /*!
@@ -2071,7 +2071,7 @@ function isnan (val) {
   return val !== val // eslint-disable-line no-self-compare
 }
 
-},{"base64-js":31,"ieee754":32,"isarray":30,"buffer":24}],18:[function(require,module,exports) {
+},{"base64-js":31,"ieee754":32,"isarray":33,"buffer":28}],21:[function(require,module,exports) {
 var global = (1,eval)("this");
 var Buffer = require("buffer").Buffer;
 'use strict';
@@ -18864,7 +18864,7 @@ var Buffer = require("buffer").Buffer;
       root._ = _;
     }
 }).call(undefined);
-},{"buffer":24}],23:[function(require,module,exports) {
+},{"buffer":28}],29:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18884,7 +18884,7 @@ class InputPreprocessor {
   }
 }
 exports.default = InputPreprocessor;
-},{}],20:[function(require,module,exports) {
+},{}],23:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18918,7 +18918,7 @@ class RemoveSpecialChars extends _InputPreprocessor2.default {
   }
 }
 exports.default = RemoveSpecialChars;
-},{"./InputPreprocessor.js":23}],19:[function(require,module,exports) {
+},{"./InputPreprocessor.js":29}],22:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18947,7 +18947,7 @@ class RemoveStopWords extends _InputPreprocessor2.default {
   }
 }
 exports.default = RemoveStopWords;
-},{"./InputPreprocessor":23}],17:[function(require,module,exports) {
+},{"./InputPreprocessor":29}],17:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -19083,7 +19083,7 @@ class CoreWorker {
         // TODO: Needed for download results. Stop doing this EVERY TIME
         // and only do it, searching again, if someone clicks export results
         // Then change `if (sampleMatches.length < 100000) {` to `< 2000`
-        this.lastFilteredResults = sampleMatches.slice(0, 2000);
+        this.lastFilteredResults = sampleMatches;
 
         this.sendProgress('searchDone', {
           matchSamples: sampleMatches.slice(0, 2000),
@@ -19229,7 +19229,7 @@ class CoreWorker {
   }
 }
 exports.default = CoreWorker;
-},{"../lib/lodash.js":18,"./preprocessors/RemoveSpecialChars":20,"../core/preprocessors/RemoveStopWords":19}],15:[function(require,module,exports) {
+},{"../lib/lodash.js":21,"./preprocessors/RemoveSpecialChars":23,"../core/preprocessors/RemoveStopWords":22}],15:[function(require,module,exports) {
 'use strict';
 
 var _CoreWorker = require('./core/CoreWorker');
@@ -19252,7 +19252,7 @@ self.addEventListener('message', async function ({ data }) {
     console.error("Unknown message action", data);
   }
 }, false);
-},{"./core/CoreWorker":17}],57:[function(require,module,exports) {
+},{"./core/CoreWorker":17}],58:[function(require,module,exports) {
 
 var global = (1, eval)('this');
 var OldModule = module.bundle.Module;
@@ -19272,7 +19272,7 @@ module.bundle.Module = Module;
 
 if (!module.bundle.parent && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
-  var ws = new WebSocket('ws://' + hostname + ':' + '52935' + '/');
+  var ws = new WebSocket('ws://' + hostname + ':' + '60337' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 
@@ -19373,5 +19373,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.require, id);
   });
 }
-},{}]},{},[57,15])
+},{}]},{},[58,15])
 //# sourceMappingURL=/dist/72db8eb4df08589c9ae19382a8417275.map
