@@ -125,7 +125,7 @@ export default class CoreWorker {
         // TODO: Needed for download results. Stop doing this EVERY TIME
         // and only do it, searching again, if someone clicks export results
         // Then change `if (sampleMatches.length < 100000) {` to `< 2000`
-        this.lastFilteredResults = sampleMatches.slice(0,2000);
+        this.lastFilteredResults = sampleMatches;
 
         this.sendProgress('searchDone', {
           matchSamples: sampleMatches.slice(0, 2000),
