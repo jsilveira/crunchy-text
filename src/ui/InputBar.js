@@ -65,6 +65,10 @@ export default class InputBar extends Component {
   handleFileDrop(files, event) {
     const file = files[0]
 
+    if(!file) {
+      return;
+    }
+
     this.setState({currentInput: {name: file.name, size: file.size}})
 
     const reader = new FileReader();
