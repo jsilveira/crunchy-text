@@ -7,6 +7,7 @@ export default class SearchResults extends Component {
   }
 
   render() {
+    let startTime = new Date();
     let searchRes = this.props.res;
 
     if(!searchRes)  {
@@ -19,7 +20,7 @@ export default class SearchResults extends Component {
 
     const results = []
     items.slice(0, 50).forEach((res, i) => {
-      results.push(<tr key={i} className={""}>
+      results.push(<tr key={i.toString()+searchRes.searchId} className={""}>
         <td> <RegexSearchResult result={res}/></td>
       </tr>)
     });
@@ -38,7 +39,7 @@ export default class SearchResults extends Component {
       if (top) {
         extras.push(<h5 key={'title'}>
           Unique matches: {top.length.toLocaleString()}&nbsp;
-          <span className='zoom-small btn btn-sm btn-link' onClick={() => this.downloadUniqueMatches(top.map(t => t[0]))} title={`Download ${top.length} unique matches as json`}>
+          <span className='zoom-small btn btn-sm btn-link ml-1 p-0' onClick={() => this.downloadUniqueMatches(top.map(t => t[0]))} title={`Download ${top.length} unique matches as json`}>
              <i className="material-icons align-middle">file_download</i>
           </span>
         </h5>)
@@ -51,10 +52,12 @@ export default class SearchResults extends Component {
       }
     }
 
+    console.log("Render time", new Date() - startTime)
+
     return (
       <div className="container-fluid">
         <div className={"row"}>
-          <div className={"col-9 p-4"}>
+          <div className={"col-9 p-3"}>
             <div className={"row"}>
               <div className={"col-9 p-0 pl-3"}>
                 <h5>
@@ -74,7 +77,7 @@ export default class SearchResults extends Component {
               </tbody>
             </table>
           </div>
-          <div className={"col-3 bg-light p-4"}>{extras}</div>
+          <div className={"col-3 bg-light p-3"}>{extras}</div>
         </div>
       </div>
     );

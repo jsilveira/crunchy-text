@@ -17,8 +17,8 @@ async function fetchSample() {
 const coreWorker = new CoreWorkerProxy();
 
 export default class TextFlow extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
       textInput: {name: 'sample', data: []},
       search: 'de \\w+',
@@ -38,6 +38,12 @@ export default class TextFlow extends Component {
 
     coreWorker.onLoadProgress(progress => this.setState({progress}))
     coreWorker.onSearchDone((results) => this.setState({results, stats: results.stats, progress: ""}))
+    coreWorker.onPartialSearchResult((results) => {
+      if(!results.extras) {
+        results.extras = this.state.results.extras;
+      }
+      this.setState({ results, stats: results.stats });
+    })
     coreWorker.onDrilldownStepsUpdate(steps => this.setState({drillDownSteps: steps}))
   }
 

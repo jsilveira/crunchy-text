@@ -8,7 +8,6 @@ let items = [];
 let filteredItems = [];
 
 let topMatches = {};
-let partial = false;
 
 let searching = false;
 let lastSearchTime = 0;
@@ -60,11 +59,14 @@ export default class CoreWorker {
 
     progressSent = false;
     topMatches = {};
+    let uniqueCount = 0;
     let sampleMatches = [];
     this.matchesIndex = [];
 
     let startTime = new Date();
+    let searchId = new Date().valueOf();
     let lastPause = new Date();
+    let lastProgressSent = new Date();
 
     const resume = (START, query) => {
       let i = 0;
@@ -79,7 +81,10 @@ export default class CoreWorker {
           if(execRes.index === lastIndex)
             break;
 
-          topMatches[execRes[0]] = (topMatches[execRes[0]] || 0) + 1
+          let matchCount = topMatches[execRes[0]];
+          if(!matchCount)
+            uniqueCount++;
+          topMatches[execRes[0]] = (matchCount || 0) + 1
           matches.push(execRes)
           lastIndex = execRes.index;
         }
@@ -93,22 +98,26 @@ export default class CoreWorker {
 
         // Check only in some iterations for performance
         if(i % 100 === 0) {
-          // Make periodical pauses to
+          // Make periodical pauses to check search should not be cancelled
           if (new Date() - lastPause > 30) {
             lastPause = new Date();
             START = i;
 
             this.sendProgress("loadProgress", `Searching ${(START / filteredItems.length * 100).toFixed(0)}%`);
-            // partial = true;
-            // finalTopMatches = _.sortBy(_.toPairs(JSON.parse(JSON.stringify(topMatches))), "1").reverse();
-            // sendProgress(q);
+
             break;
           }
 
-          if (new Date() - startTime > 35 && !progressSent) {
-            partial = true;
-            // topMatches = _.sortBy(_.toPairs(topMatches), "1").reverse();
-            // this.sendProgress(query);
+          if (new Date() - startTime > 35 && (!progressSent || new Date() - lastProgressSent > 250)) {
+            this.sendProgress('partialSearchResult', {
+              matchSamples: sampleMatches.slice(0, 50),
+              searchId: searchId,
+              stats: {
+                matchesCount: this.matchesIndex.length,
+                totalCount: filteredItems.length
+              }
+            });
+            lastProgressSent = new Date();
             progressSent = true;
           }
         }
@@ -118,7 +127,6 @@ export default class CoreWorker {
         nextTick = setTimeout(() => resume(START, query), 0);
       } else {
         topMatches = _.sortBy(_.toPairs(topMatches), "1").reverse();
-        partial = false;
         searching = false;
         lastSearchTime = new Date().valueOf() - startTime;
 

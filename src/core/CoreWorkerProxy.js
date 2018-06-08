@@ -62,6 +62,10 @@ export default class CoreWorkerProxy {
     this.onMsg('searchDone', cbk)
   }
 
+  onPartialSearchResult(cbk) {
+    this.onMsg('partialSearchResult', cbk)
+  }
+
   onLoadProgress(cbk) {
     this.onMsg('loadProgress',cbk)
   }
