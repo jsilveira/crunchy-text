@@ -1,4 +1,4 @@
-// modules are defined as an array
+.// modules are defined as an array
 // [ module function, map of requires ]
 //
 // map of requires is short require name -> numeric require
@@ -19739,7 +19739,7 @@ class CoreWorkerProxy {
     if (singletonWorker) {
       singletonWorker.terminate();
     }
-    this.worker = new Worker('/worker.298488d0.js');
+    this.worker = new Worker('dist/worker.298488d0.js');
     singletonWorker = this.worker;
 
     this.msgCbks = {};
