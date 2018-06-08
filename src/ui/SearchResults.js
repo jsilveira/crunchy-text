@@ -1,7 +1,11 @@
 import React, {Component} from 'react';
-
+import downloadFile from "../utils/downloadFile";
 
 export default class SearchResults extends Component {
+  downloadUniqueMatches(matches) {
+    downloadFile(JSON.stringify(matches, true, 4), 'unique-matches.json')
+  }
+
   render() {
     let searchRes = this.props.res;
 
@@ -32,7 +36,12 @@ export default class SearchResults extends Component {
       let max = 50;
       let top = (searchRes.extras || {}).topMatches;
       if (top) {
-        extras.push(<h5 key={'title'}>Unique matches: {top.length}</h5>)
+        extras.push(<h5 key={'title'}>
+          Unique matches: {top.length}&nbsp;
+          <span className='zoom-small btn btn-sm btn-link' onClick={() => this.downloadUniqueMatches(top.map(t => t[0]))} title={`Download ${top.length} unique matches as json`}>
+             <i className="material-icons align-middle">file_download</i>
+          </span>
+        </h5>)
         extras.push(<TopMatches key={'top'} title={`Top ${Math.min(max, top.length)} matches`} matches={top.slice(0, max)}/>)
         if (top.length > max) {
           extras.push(<hr key={'hr'}/>)
@@ -47,7 +56,7 @@ export default class SearchResults extends Component {
         <div className={"row"}>
           <div className={"col-9 p-4"}>
             <div className={"row"}>
-              <div className={"col-9 p-0"}>
+              <div className={"col-9 p-0 pl-3"}>
                 <h5>
                   {stats.matchesCount} matches &nbsp;
                   <em className={"text-info"}>{status}</em>
@@ -102,10 +111,10 @@ class TopMatches extends Component {
     let items = (this.props.matches || []);
 
     const matches = []
-    items.slice(0, 100).forEach((m, i) => {
+    items.slice(0, 100).forEach(([uniqueMatch, count], i) => {
       matches.push(<tr key={i} className={""}>
-        <td className={"text-info text-right"}> {m[1].toString()} </td>
-        <td>{m[0].toString()} </td>
+        <td className={"text-info text-right"}> {count.toString()} </td>
+        <td>{uniqueMatch.toString()} </td>
       </tr>)
     });
 

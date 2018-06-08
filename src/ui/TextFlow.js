@@ -5,6 +5,7 @@ import SearchBar from './SearchBar.js';
 import SearchResults from './SearchResults.js';
 import CoreWorkerProxy from "../core/CoreWorkerProxy";
 import DrilldownFiltersBar from "./DrilldownFiltersBar";
+import downloadFile from "../utils/downloadFile";
 
 //const sampleURL = 'https://raw.githubusercontent.com/lutangar/cities.json/master/cities.json';
 const sampleData = require('../../public/samples/sample-data.json');
@@ -66,20 +67,11 @@ export default class TextFlow extends Component {
   }
 
   async downloadResults() {
-    function downloadFile(content, fileName, contentType) {
-      const a = document.createElement("a");
-      const file = new Blob([content], {type: contentType});
-      a.href = URL.createObjectURL(file);
-      a.download = fileName;
-      a.click();
-      a.remove();
-    }
-
     const data = await coreWorker.getFilteredData();
     const exportedData = data.map(({itemText}) => itemText);
 
     let fileName = `${this.state.textInput.name}-filtered.json`;
-    debugger;
+
     downloadFile(JSON.stringify(exportedData, true, 4), fileName, 'text/plain');
   }
 

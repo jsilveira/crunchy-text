@@ -16,6 +16,7 @@
     "react-file-drop": "^0.1.9"
   },
   "devDependencies": {
+    "babel-core": "^6.26.3",
     "babel-preset-env": "^1.6.1",
     "babel-preset-react": "^6.24.1"
   }
