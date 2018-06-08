@@ -10,8 +10,18 @@ export default class SearchBar extends Component {
 
   handleChange(event) {
     const value = event.target.value;
-    // console.log('Original:', value)
+
+
+    try {
+      // Try converting it to regex
+      new RegExp(value)
+      this.setState({ invalidRegex: false });
+    } catch (err) {
+      this.setState({ invalidRegex: true })
+    }
+
     this.setState({ value });
+
     if (this.props.onChange) {
       this.props.onChange(value)
     }
@@ -51,7 +61,13 @@ export default class SearchBar extends Component {
       <div className="bg-dark container-fluid p-2">
         <div className="" id="navbarSupportedContent">
           <form className="my-0 my-lg-0">
-            <input type="search" placeholder="Search text with regex..." onKeyDown={this.preventFormSubmitOnEnter.bind(this)} className="form-control" value={this.state.value} onChange={this.handleChange} />
+            <input
+              type="search"
+              placeholder="Search text with regex..."
+              onKeyDown={this.preventFormSubmitOnEnter.bind(this)}
+              className={"form-control"+(this.state.invalidRegex ? ' text-danger' : '')}
+              value={this.state.value}
+              onChange={this.handleChange} />
           </form>
         </div>
       </div>

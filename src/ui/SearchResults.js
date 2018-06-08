@@ -15,7 +15,7 @@ export default class SearchResults extends Component {
 
     let items = (searchRes.matchSamples || []);
     let stats = (searchRes.stats || {});
-    let status = this.props.progress || `Searched ${stats.totalCount} items in ${stats.searchTime}ms`;
+    let status = this.props.progress || `Searched ${stats.totalCount.toLocaleString()} items in ${stats.searchTime}ms`;
 
     const results = []
     items.slice(0, 50).forEach((res, i) => {
@@ -37,7 +37,7 @@ export default class SearchResults extends Component {
       let top = (searchRes.extras || {}).topMatches;
       if (top) {
         extras.push(<h5 key={'title'}>
-          Unique matches: {top.length}&nbsp;
+          Unique matches: {top.length.toLocaleString()}&nbsp;
           <span className='zoom-small btn btn-sm btn-link' onClick={() => this.downloadUniqueMatches(top.map(t => t[0]))} title={`Download ${top.length} unique matches as json`}>
              <i className="material-icons align-middle">file_download</i>
           </span>
@@ -58,7 +58,7 @@ export default class SearchResults extends Component {
             <div className={"row"}>
               <div className={"col-9 p-0 pl-3"}>
                 <h5>
-                  {stats.matchesCount} matches &nbsp;
+                  {stats.matchesCount.toLocaleString()} matches &nbsp;
                   <em className={"text-info"}>{status}</em>
                 </h5>
               </div>
