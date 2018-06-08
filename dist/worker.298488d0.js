@@ -7,9 +7,10 @@
 // orig method which is the require for previous bundles
 
 // eslint-disable-next-line no-global-assign
-require = (function (modules, cache, entry) {
+parcelRequire = (function (modules, cache, entry, globalName) {
   // Save the require from previous bundle to this closure if any
-  var previousRequire = typeof require === "function" && require;
+  var previousRequire = typeof parcelRequire === 'function' && parcelRequire;
+  var nodeRequire = typeof require === 'function' && require;
 
   function newRequire(name, jumped) {
     if (!cache[name]) {
@@ -17,7 +18,7 @@ require = (function (modules, cache, entry) {
         // if we cannot find the module within our internal map or
         // cache jump to the current global require ie. the last bundle
         // that was added to the page.
-        var currentRequire = typeof require === "function" && require;
+        var currentRequire = typeof parcelRequire === 'function' && parcelRequire;
         if (!jumped && currentRequire) {
           return currentRequire(name, true);
         }
@@ -30,16 +31,21 @@ require = (function (modules, cache, entry) {
           return previousRequire(name, true);
         }
 
+        // Try the node require function if it exists.
+        if (nodeRequire && typeof name === 'string') {
+          return nodeRequire(name);
+        }
+
         var err = new Error('Cannot find module \'' + name + '\'');
         err.code = 'MODULE_NOT_FOUND';
         throw err;
       }
-      
+
       localRequire.resolve = resolve;
 
-      var module = cache[name] = new newRequire.Module;
+      var module = cache[name] = new newRequire.Module(name);
 
-      modules[name][0].call(module.exports, localRequire, module, module.exports);
+      modules[name][0].call(module.exports, localRequire, module, module.exports, this);
     }
 
     return cache[name].exports;
@@ -53,11 +59,13 @@ require = (function (modules, cache, entry) {
     }
   }
 
-  function Module() {
+  function Module(moduleName) {
+    this.id = moduleName;
     this.bundle = newRequire;
     this.exports = {};
   }
 
+  newRequire.isParcelRequire = true;
   newRequire.Module = Module;
   newRequire.modules = modules;
   newRequire.cache = cache;
@@ -67,9 +75,30 @@ require = (function (modules, cache, entry) {
     newRequire(entry[i]);
   }
 
+  if (entry.length) {
+    // Expose entry point to Node, AMD or browser globals
+    // Based on https://github.com/ForbesLindesay/umd/blob/master/template.js
+    var mainExports = newRequire(entry[entry.length - 1]);
+
+    // CommonJS
+    if (typeof exports === "object" && typeof module !== "undefined") {
+      module.exports = mainExports;
+
+    // RequireJS
+    } else if (typeof define === "function" && define.amd) {
+     define(function () {
+       return mainExports;
+     });
+
+    // <script>
+    } else if (globalName) {
+      this[globalName] = mainExports;
+    }
+  }
+
   // Override the current require with this new one
   return newRequire;
-})({31:[function(require,module,exports) {
+})({52:[function(require,module,exports) {
 'use strict'
 
 exports.byteLength = byteLength
@@ -86,68 +115,102 @@ for (var i = 0, len = code.length; i < len; ++i) {
   revLookup[code.charCodeAt(i)] = i
 }
 
+// Support decoding URL-safe base64 strings, as Node.js does.
+// See: https://en.wikipedia.org/wiki/Base64#URL_applications
 revLookup['-'.charCodeAt(0)] = 62
 revLookup['_'.charCodeAt(0)] = 63
 
-function placeHoldersCount (b64) {
+function getLens (b64) {
   var len = b64.length
+
   if (len % 4 > 0) {
     throw new Error('Invalid string. Length must be a multiple of 4')
   }
 
-  // the number of equal signs (place holders)
-  // if there are two placeholders, than the two characters before it
-  // represent one byte
-  // if there is only one, then the three characters before it represent 2 bytes
-  // this is just a cheap hack to not do indexOf twice
-  return b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0
+  // Trim off extra bytes after placeholder bytes are found
+  // See: https://github.com/beatgammit/base64-js/issues/42
+  var validLen = b64.indexOf('=')
+  if (validLen === -1) validLen = len
+
+  var placeHoldersLen = validLen === len
+    ? 0
+    : 4 - (validLen % 4)
+
+  return [validLen, placeHoldersLen]
 }
 
+// base64 is 4/3 + up to two characters of the original data
 function byteLength (b64) {
-  // base64 is 4/3 + up to two characters of the original data
-  return (b64.length * 3 / 4) - placeHoldersCount(b64)
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+}
+
+function _byteLength (b64, validLen, placeHoldersLen) {
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
 }
 
 function toByteArray (b64) {
-  var i, l, tmp, placeHolders, arr
-  var len = b64.length
-  placeHolders = placeHoldersCount(b64)
+  var tmp
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
 
-  arr = new Arr((len * 3 / 4) - placeHolders)
+  var arr = new Arr(_byteLength(b64, validLen, placeHoldersLen))
+
+  var curByte = 0
 
   // if there are placeholders, only get up to the last complete 4 chars
-  l = placeHolders > 0 ? len - 4 : len
+  var len = placeHoldersLen > 0
+    ? validLen - 4
+    : validLen
 
-  var L = 0
-
-  for (i = 0; i < l; i += 4) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)]
-    arr[L++] = (tmp >> 16) & 0xFF
-    arr[L++] = (tmp >> 8) & 0xFF
-    arr[L++] = tmp & 0xFF
+  for (var i = 0; i < len; i += 4) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 18) |
+      (revLookup[b64.charCodeAt(i + 1)] << 12) |
+      (revLookup[b64.charCodeAt(i + 2)] << 6) |
+      revLookup[b64.charCodeAt(i + 3)]
+    arr[curByte++] = (tmp >> 16) & 0xFF
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
   }
 
-  if (placeHolders === 2) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 2) | (revLookup[b64.charCodeAt(i + 1)] >> 4)
-    arr[L++] = tmp & 0xFF
-  } else if (placeHolders === 1) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 10) | (revLookup[b64.charCodeAt(i + 1)] << 4) | (revLookup[b64.charCodeAt(i + 2)] >> 2)
-    arr[L++] = (tmp >> 8) & 0xFF
-    arr[L++] = tmp & 0xFF
+  if (placeHoldersLen === 2) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 2) |
+      (revLookup[b64.charCodeAt(i + 1)] >> 4)
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  if (placeHoldersLen === 1) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 10) |
+      (revLookup[b64.charCodeAt(i + 1)] << 4) |
+      (revLookup[b64.charCodeAt(i + 2)] >> 2)
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
   }
 
   return arr
 }
 
 function tripletToBase64 (num) {
-  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F]
+  return lookup[num >> 18 & 0x3F] +
+    lookup[num >> 12 & 0x3F] +
+    lookup[num >> 6 & 0x3F] +
+    lookup[num & 0x3F]
 }
 
 function encodeChunk (uint8, start, end) {
   var tmp
   var output = []
   for (var i = start; i < end; i += 3) {
-    tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
+    tmp =
+      ((uint8[i] << 16) & 0xFF0000) +
+      ((uint8[i + 1] << 8) & 0xFF00) +
+      (uint8[i + 2] & 0xFF)
     output.push(tripletToBase64(tmp))
   }
   return output.join('')
@@ -157,38 +220,41 @@ function fromByteArray (uint8) {
   var tmp
   var len = uint8.length
   var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
-  var output = ''
   var parts = []
   var maxChunkLength = 16383 // must be multiple of 3
 
   // go through the array every three bytes, we'll deal with trailing stuff later
   for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
-    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
+    parts.push(encodeChunk(
+      uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)
+    ))
   }
 
   // pad the end with zeros, but make sure to not forget the extra bytes
   if (extraBytes === 1) {
     tmp = uint8[len - 1]
-    output += lookup[tmp >> 2]
-    output += lookup[(tmp << 4) & 0x3F]
-    output += '=='
+    parts.push(
+      lookup[tmp >> 2] +
+      lookup[(tmp << 4) & 0x3F] +
+      '=='
+    )
   } else if (extraBytes === 2) {
-    tmp = (uint8[len - 2] << 8) + (uint8[len - 1])
-    output += lookup[tmp >> 10]
-    output += lookup[(tmp >> 4) & 0x3F]
-    output += lookup[(tmp << 2) & 0x3F]
-    output += '='
+    tmp = (uint8[len - 2] << 8) + uint8[len - 1]
+    parts.push(
+      lookup[tmp >> 10] +
+      lookup[(tmp >> 4) & 0x3F] +
+      lookup[(tmp << 2) & 0x3F] +
+      '='
+    )
   }
-
-  parts.push(output)
 
   return parts.join('')
 }
 
-},{}],32:[function(require,module,exports) {
+},{}],53:[function(require,module,exports) {
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
-  var eLen = nBytes * 8 - mLen - 1
+  var eLen = (nBytes * 8) - mLen - 1
   var eMax = (1 << eLen) - 1
   var eBias = eMax >> 1
   var nBits = -7
@@ -201,12 +267,12 @@ exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   e = s & ((1 << (-nBits)) - 1)
   s >>= (-nBits)
   nBits += eLen
-  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+  for (; nBits > 0; e = (e * 256) + buffer[offset + i], i += d, nBits -= 8) {}
 
   m = e & ((1 << (-nBits)) - 1)
   e >>= (-nBits)
   nBits += mLen
-  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+  for (; nBits > 0; m = (m * 256) + buffer[offset + i], i += d, nBits -= 8) {}
 
   if (e === 0) {
     e = 1 - eBias
@@ -221,7 +287,7 @@ exports.read = function (buffer, offset, isLE, mLen, nBytes) {
 
 exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   var e, m, c
-  var eLen = nBytes * 8 - mLen - 1
+  var eLen = (nBytes * 8) - mLen - 1
   var eMax = (1 << eLen) - 1
   var eBias = eMax >> 1
   var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
@@ -254,7 +320,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
       m = 0
       e = eMax
     } else if (e + eBias >= 1) {
-      m = (value * c - 1) * Math.pow(2, mLen)
+      m = ((value * c) - 1) * Math.pow(2, mLen)
       e = e + eBias
     } else {
       m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
@@ -271,16 +337,16 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],33:[function(require,module,exports) {
+},{}],54:[function(require,module,exports) {
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],28:[function(require,module,exports) {
+},{}],50:[function(require,module,exports) {
 
-var global = (1,eval)("this");
+var global = arguments[3];
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -2071,11 +2137,10 @@ function isnan (val) {
   return val !== val // eslint-disable-line no-self-compare
 }
 
-},{"base64-js":31,"ieee754":32,"isarray":33,"buffer":28}],21:[function(require,module,exports) {
-var global = (1,eval)("this");
+},{"base64-js":52,"ieee754":53,"isarray":54,"buffer":50}],44:[function(require,module,exports) {
+var global = arguments[3];
 var Buffer = require("buffer").Buffer;
-'use strict';
-
+var define;
 /**
  * @license
  * Lodash <https://lodash.com/>
@@ -18863,8 +18928,8 @@ var Buffer = require("buffer").Buffer;
       // Export to the global object.
       root._ = _;
     }
-}).call(undefined);
-},{"buffer":28}],29:[function(require,module,exports) {
+}).call(this);
+},{"buffer":50}],51:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18884,7 +18949,7 @@ class InputPreprocessor {
   }
 }
 exports.default = InputPreprocessor;
-},{}],23:[function(require,module,exports) {
+},{}],45:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18918,7 +18983,7 @@ class RemoveSpecialChars extends _InputPreprocessor2.default {
   }
 }
 exports.default = RemoveSpecialChars;
-},{"./InputPreprocessor.js":29}],22:[function(require,module,exports) {
+},{"./InputPreprocessor.js":51}],46:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18947,7 +19012,7 @@ class RemoveStopWords extends _InputPreprocessor2.default {
   }
 }
 exports.default = RemoveStopWords;
-},{"./InputPreprocessor":29}],17:[function(require,module,exports) {
+},{"./InputPreprocessor":51}],37:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18973,7 +19038,6 @@ let items = []; // self.onmessage=function(e){postMessage('Worker: '+e.data);}
 let filteredItems = [];
 
 let topMatches = {};
-let partial = false;
 
 let searching = false;
 let lastSearchTime = 0;
@@ -19019,11 +19083,14 @@ class CoreWorker {
 
     progressSent = false;
     topMatches = {};
+    let uniqueCount = 0;
     let sampleMatches = [];
     this.matchesIndex = [];
 
     let startTime = new Date();
+    let searchId = new Date().valueOf();
     let lastPause = new Date();
+    let lastProgressSent = new Date();
 
     const resume = (START, query) => {
       let i = 0;
@@ -19037,7 +19104,9 @@ class CoreWorker {
           // Prevent infinite loop if the regex does not consume characters
           if (execRes.index === lastIndex) break;
 
-          topMatches[execRes[0]] = (topMatches[execRes[0]] || 0) + 1;
+          let matchCount = topMatches[execRes[0]];
+          if (!matchCount) uniqueCount++;
+          topMatches[execRes[0]] = (matchCount || 0) + 1;
           matches.push(execRes);
           lastIndex = execRes.index;
         }
@@ -19051,22 +19120,26 @@ class CoreWorker {
 
         // Check only in some iterations for performance
         if (i % 100 === 0) {
-          // Make periodical pauses to
+          // Make periodical pauses to check search should not be cancelled
           if (new Date() - lastPause > 30) {
             lastPause = new Date();
             START = i;
 
             this.sendProgress("loadProgress", `Searching ${(START / filteredItems.length * 100).toFixed(0)}%`);
-            // partial = true;
-            // finalTopMatches = _.sortBy(_.toPairs(JSON.parse(JSON.stringify(topMatches))), "1").reverse();
-            // sendProgress(q);
+
             break;
           }
 
-          if (new Date() - startTime > 35 && !progressSent) {
-            partial = true;
-            // topMatches = _.sortBy(_.toPairs(topMatches), "1").reverse();
-            // this.sendProgress(query);
+          if (new Date() - startTime > 35 && (!progressSent || new Date() - lastProgressSent > 250)) {
+            this.sendProgress('partialSearchResult', {
+              matchSamples: sampleMatches.slice(0, 50),
+              searchId: searchId,
+              stats: {
+                matchesCount: this.matchesIndex.length,
+                totalCount: filteredItems.length
+              }
+            });
+            lastProgressSent = new Date();
             progressSent = true;
           }
         }
@@ -19076,7 +19149,6 @@ class CoreWorker {
         nextTick = setTimeout(() => resume(START, query), 0);
       } else {
         topMatches = _lodash2.default.sortBy(_lodash2.default.toPairs(topMatches), "1").reverse();
-        partial = false;
         searching = false;
         lastSearchTime = new Date().valueOf() - startTime;
 
@@ -19229,7 +19301,7 @@ class CoreWorker {
   }
 }
 exports.default = CoreWorker;
-},{"../lib/lodash.js":21,"./preprocessors/RemoveSpecialChars":23,"../core/preprocessors/RemoveStopWords":22}],15:[function(require,module,exports) {
+},{"../lib/lodash.js":44,"./preprocessors/RemoveSpecialChars":45,"../core/preprocessors/RemoveStopWords":46}],20:[function(require,module,exports) {
 'use strict';
 
 var _CoreWorker = require('./core/CoreWorker');
@@ -19252,40 +19324,51 @@ self.addEventListener('message', async function ({ data }) {
     console.error("Unknown message action", data);
   }
 }, false);
-},{"./core/CoreWorker":17}],58:[function(require,module,exports) {
+},{"./core/CoreWorker":37}],55:[function(require,module,exports) {
+var global = arguments[3];
+var OVERLAY_ID = '__parcel__error__overlay__';
 
-var global = (1, eval)('this');
 var OldModule = module.bundle.Module;
-function Module() {
-  OldModule.call(this);
+
+function Module(moduleName) {
+  OldModule.call(this, moduleName);
   this.hot = {
+    data: module.bundle.hotData,
+    _acceptCallbacks: [],
+    _disposeCallbacks: [],
     accept: function (fn) {
-      this._acceptCallback = fn || function () {};
+      this._acceptCallbacks.push(fn || function () {});
     },
     dispose: function (fn) {
-      this._disposeCallback = fn;
+      this._disposeCallbacks.push(fn);
     }
   };
+
+  module.bundle.hotData = null;
 }
 
 module.bundle.Module = Module;
 
-if (!module.bundle.parent && typeof WebSocket !== 'undefined') {
+var parent = module.bundle.parent;
+if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
-  var ws = new WebSocket('ws://' + hostname + ':' + '60337' + '/');
+  var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + '49226' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 
     if (data.type === 'update') {
       data.assets.forEach(function (asset) {
-        hmrApply(global.require, asset);
+        hmrApply(global.parcelRequire, asset);
       });
 
       data.assets.forEach(function (asset) {
         if (!asset.isNew) {
-          hmrAccept(global.require, asset.id);
+          hmrAccept(global.parcelRequire, asset.id);
         }
       });
+      // Clear the console after HMR
+      console.clear();
     }
 
     if (data.type === 'reload') {
@@ -19297,12 +19380,41 @@ if (!module.bundle.parent && typeof WebSocket !== 'undefined') {
 
     if (data.type === 'error-resolved') {
       console.log('[parcel] ✨ Error resolved');
+
+      removeErrorOverlay();
     }
 
     if (data.type === 'error') {
-      console.error('[parcel] 🚨  ' + data.error.message + '\n' + 'data.error.stack');
+      console.error('[parcel] 🚨  ' + data.error.message + '\n' + data.error.stack);
+
+      removeErrorOverlay();
+
+      var overlay = createErrorOverlay(data);
+      document.body.appendChild(overlay);
     }
   };
+}
+
+function removeErrorOverlay() {
+  var overlay = document.getElementById(OVERLAY_ID);
+  if (overlay) {
+    overlay.remove();
+  }
+}
+
+function createErrorOverlay(data) {
+  var overlay = document.createElement('div');
+  overlay.id = OVERLAY_ID;
+
+  // html encode message and stack trace
+  var message = document.createElement('div');
+  var stackTrace = document.createElement('pre');
+  message.innerText = data.error.message;
+  stackTrace.innerText = data.error.stack;
+
+  overlay.innerHTML = '<div style="background: black; font-size: 16px; color: white; position: fixed; height: 100%; width: 100%; top: 0px; left: 0px; padding: 30px; opacity: 0.85; font-family: Menlo, Consolas, monospace; z-index: 9999;">' + '<span style="background: red; padding: 2px 4px; border-radius: 2px;">ERROR</span>' + '<span style="top: 2px; margin-left: 5px; position: relative;">🚨</span>' + '<div style="font-size: 18px; font-weight: bold; margin-top: 20px;">' + message.innerHTML + '</div>' + '<pre>' + stackTrace.innerHTML + '</pre>' + '</div>';
+
+  return overlay;
 }
 
 function getParents(bundle, id) {
@@ -19356,22 +19468,31 @@ function hmrAccept(bundle, id) {
   }
 
   var cached = bundle.cache[id];
-  if (cached && cached.hot._disposeCallback) {
-    cached.hot._disposeCallback();
+  bundle.hotData = {};
+  if (cached) {
+    cached.hot.data = bundle.hotData;
+  }
+
+  if (cached && cached.hot && cached.hot._disposeCallbacks.length) {
+    cached.hot._disposeCallbacks.forEach(function (cb) {
+      cb(bundle.hotData);
+    });
   }
 
   delete bundle.cache[id];
   bundle(id);
 
   cached = bundle.cache[id];
-  if (cached && cached.hot && cached.hot._acceptCallback) {
-    cached.hot._acceptCallback();
+  if (cached && cached.hot && cached.hot._acceptCallbacks.length) {
+    cached.hot._acceptCallbacks.forEach(function (cb) {
+      cb();
+    });
     return true;
   }
 
-  return getParents(global.require, id).some(function (id) {
-    return hmrAccept(global.require, id);
+  return getParents(global.parcelRequire, id).some(function (id) {
+    return hmrAccept(global.parcelRequire, id);
   });
 }
-},{}]},{},[58,15])
-//# sourceMappingURL=/dist/72db8eb4df08589c9ae19382a8417275.map
+},{}]},{},[55,20], null)
+//# sourceMappingURL=/worker.298488d0.map
