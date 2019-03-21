@@ -14,9 +14,8 @@ async function fetchSample() {
   return await (await fetch(sampleURL)).json()
 }
 
-const coreWorker = new CoreWorkerProxy();
 
-export default class TextFlow extends Component {
+export default class CrunchyText extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -29,43 +28,50 @@ export default class TextFlow extends Component {
     };
 
     this.searchChanged = this.searchChanged.bind(this);
-    this.textInputChanged = this.textInputChanged.bind(this);
+    this.inputDataChanged = this.inputDataChanged.bind(this);
 
-    coreWorker.loadData(sampleData);
+    this.coreWorker = new CoreWorkerProxy();
+    this.coreWorker.loadData(sampleData);
     setTimeout(() => {
       this.search();
     }, 20)
 
-    coreWorker.onLoadProgress(progress => this.setState({progress}))
-    coreWorker.onSearchDone((results) => this.setState({results, stats: results.stats, progress: ""}))
-    coreWorker.onPartialSearchResult((results) => {
+    this.coreWorker.onLoadProgress(progress => this.setState({progress}))
+    this.coreWorker.onSearchDone(results => this.setState({results, stats: results.stats, progress: ""}))
+    this.coreWorker.onPartialSearchResult((results) => {
       if(!results.extras) {
         results.extras = this.state.results.extras;
       }
       this.setState({ results, stats: results.stats });
     })
-    coreWorker.onDrilldownStepsUpdate(steps => this.setState({drillDownSteps: steps}))
+    this.coreWorker.onDrilldownStepsUpdate(steps => this.setState({drillDownSteps: steps}))
+  }
+
+  onInputProgress(progress) {
+    this.setState({progress})
   }
 
   search() {
     try {
-      coreWorker.search(new RegExp(this.state.search, 'igm'));
+      this.coreWorker.search(new RegExp(this.state.search, 'igm'));
     } catch (err) {
       this.setState({invalidInput: true})
     }
   }
 
-  textInputChanged(textInput) {
-    this.setState({textInput})
-    console.log("Sending data to worker")
-    coreWorker.loadData(textInput.data);
-    console.log("Sending data DONE")
-    this.search()
+  inputDataChanged(textInput) {
+    this.setState({textInput, progress: "Sending data to worker..."})
+
+    // Set timeout to ensure progress is show
+    setTimeout(() => {
+      this.coreWorker.loadData(textInput.data)
+      this.search()
+    }, 1)
   }
 
   preprocessorsChanged(preprocessors) {
     preprocessors.forEach(p => p.className = p.name)
-    coreWorker.setPreprocessors(preprocessors);
+    this.coreWorker.setPreprocessors(preprocessors);
   }
 
   searchChanged(search) {
@@ -73,7 +79,7 @@ export default class TextFlow extends Component {
   }
 
   async downloadResults() {
-    const data = await coreWorker.getFilteredData();
+    const data = await this.coreWorker.getFilteredData();
     const exportedData = data.map(({itemText}) => itemText);
 
     let fileName = `${this.state.textInput.name}-filtered.json`;
@@ -82,7 +88,7 @@ export default class TextFlow extends Component {
   }
 
   drilldownAction(actionName, ... params) {
-    coreWorker.drilldownAction(actionName, ... params);
+    this.coreWorker.drilldownAction(actionName, ... params);
 
     if(actionName === "addFilter" || actionName === "addExclusion") {
       this.setState({search: ""})
@@ -90,15 +96,22 @@ export default class TextFlow extends Component {
     }
   }
 
+
   render() {
+    let {search, inputSettings, drillDownSteps, progress, results} = this.state;
+
     return (
       <div>
-        <InputBar value={this.state.inputSettings}
-                  onChange={this.textInputChanged.bind(this)}
+        <InputBar value={inputSettings}
+                  onChange={this.inputDataChanged.bind(this)}
+                  onInputProgress={this.onInputProgress.bind(this)}
                   onPreprocessorChange={this.preprocessorsChanged.bind(this)}/>
-        <SearchBar value={this.state.search} onChange={this.searchChanged.bind(this)} onDrilldownAction={this.drilldownAction.bind(this)}/>
-        <DrilldownFiltersBar drilldownSteps={this.state.drillDownSteps} onDrilldownAction={this.drilldownAction.bind(this)}/>
-        <SearchResults progress={this.state.progress} res={this.state.results} onDownloadResults={this.downloadResults.bind(this)}/>
+
+        <SearchBar value={search} onChange={this.searchChanged.bind(this)} onDrilldownAction={this.drilldownAction.bind(this)}/>
+
+        <DrilldownFiltersBar drilldownSteps={drillDownSteps} onDrilldownAction={this.drilldownAction.bind(this)}/>
+
+        <SearchResults progress={progress} res={results} onDownloadResults={this.downloadResults.bind(this)}/>
       </div>
     );
   }

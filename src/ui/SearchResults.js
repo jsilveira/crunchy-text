@@ -1,5 +1,7 @@
 import React, {Component} from 'react';
 import downloadFile from "../utils/downloadFile";
+// import styles from "../../public/stylesheets/test.css"
+import styles from "../../public/stylesheets/search-results.less"
 
 export default class SearchResults extends Component {
   downloadUniqueMatches(matches) {
@@ -11,7 +13,7 @@ export default class SearchResults extends Component {
     let searchRes = this.props.res;
 
     if(!searchRes)  {
-      return (<div className={"m-3"}><h5>No data has been loaded yet</h5></div>)
+      return (<div className={"m-3"}><h5 className="pl-2">No data has been loaded yet</h5></div>)
     }
 
     let items = (searchRes.matchSamples || []);
@@ -52,7 +54,7 @@ export default class SearchResults extends Component {
       }
     }
 
-    console.log("Render time", new Date() - startTime)
+    // console.log("Render time", new Date() - startTime)
 
     return (
       <div className="container-fluid">
@@ -60,7 +62,7 @@ export default class SearchResults extends Component {
           <div className={"col-9 p-3"}>
             <div className={"row"}>
               <div className={"col-9 p-0 pl-3"}>
-                <h5>
+                <h5 className={'pl-2'}>
                   {stats.matchesCount.toLocaleString()} matches &nbsp;
                   <em className={"text-info"}>{status}</em>
                 </h5>
@@ -71,7 +73,7 @@ export default class SearchResults extends Component {
                 </span>
               </div>
             </div>
-            <table className={"ResultsTable"}>
+            <table className={styles.ResultsTable}>
               <tbody>
               {results}
               </tbody>
@@ -93,7 +95,7 @@ class RegexSearchResult extends Component {
     matches.forEach((m, i) => {
       parts.push(itemText.slice(from, m.index));
       let to = m.index+m[0].length;
-      parts.push(<mark key={i}>{itemText.slice(m.index,to)}</mark>);
+      parts.push(<mark className={styles.markj} key={i}>{itemText.slice(m.index,to)}</mark>);
       from = to;
     })
     parts.push(itemText.slice(from));
@@ -124,7 +126,7 @@ class TopMatches extends Component {
     return (
       <div>
         <h6>{this.props.title}</h6>
-        <table className={"TopMatchesTable"}>
+        <table className={styles.TopMatchesTable}>
           <tbody>
           {matches}
           </tbody>

@@ -67,7 +67,7 @@ export default class DrilldownFiltersBar extends Component {
     }
 
     return (
-      <div className="drilldown-filters-bar">
+      <div style={{zoom: '0.8'}} className="drilldown-filters-bar">
         { stepsBar }
         <div className="bg-light container-fluid text-white p-0">
           <span className={'btn btn-link'} onClick={this.addFilter.bind(this)}>

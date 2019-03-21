@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import FileDrop from 'react-file-drop'
 import PreprocessorsSelector from "./PreprocessorsSelector";
+import "../../public/stylesheets/file-drop.css"
 
 // getJSON(url, sucessCbk, errCbk = ()=>console.error(err)) {
 //   let request = new XMLHttpRequest();
@@ -63,6 +64,11 @@ export default class InputBar extends Component {
   }
 
   handleFileDrop(files, event) {
+    // Disables Native Event -- relying on Proxy Event -- prevents double firing
+    // if (!event.nativeEvent) {
+    //   return;
+    // }
+
     const file = files[0]
 
     if(!file) {
@@ -94,8 +100,7 @@ export default class InputBar extends Component {
       if (lengthComputable) {
         const percentLoaded = Math.round((loaded / total) * 100);
         if (percentLoaded < 100) {
-          //angular.element($(".resultsarea")).scope().loadingFileProgress(`Loading ${percentLoaded}% (${file.name})`);
-          console.log(`Loading ${percentLoaded}% (${file.name})`);
+          this.props.onInputProgress(`Loading ${percentLoaded}% (${file.name})`);
         }
       }
     };
@@ -105,11 +110,12 @@ export default class InputBar extends Component {
       // Ensure that the progress bar displays 100% at the end.
       // angular.element($(".resultsarea")).scope().loadingFileProgress(`Loading ${100}% (${file.name})`);
 
-      console.log(`Loaded 100% (${file.name})`);
+      this.props.onInputProgress(`Loaded 100%. Parsing... (${file.name})`)
 
       if (this.props.onChange) {
         this.fileContent = reader.result;
-        this.props.onChange({name: file.name, data: DataLoader.loadFileData(file, this.fileContent)})
+        // Use a timeout to give time to the UI to update progress
+        setTimeout(() => this.props.onChange({name: file.name, data: DataLoader.loadFileData(file, this.fileContent)}), 5)
       }
     };
     // Read in the image file as a binary string.

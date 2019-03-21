@@ -1,22 +1,6 @@
-import React, { Component } from 'react';
-import { render } from 'react-dom';
-
-import TextFlow from './ui/TextFlow.js';
-
-
-class App extends Component {
-  constructor() {
-    super();
-    this.state = {
-      name: 'React'
-    };
-  }
-
-  render() {
-    return (
-      <TextFlow />
-    );
-  }
-}
-
-render(<App />, document.getElementById('root'));
+export { default as CrunchyText } from './ui/CrunchyText'
+export { default as SearchBar } from './ui/SearchBar'
+export { default as SearchResults } from './ui/SearchResults'
+export { default as DrilldownFiltersBar } from './ui/DrilldownFiltersBar'
+export { default as InputBar } from './ui/InputBar'
+export { default as CoreWorkerProxy } from './core/CoreWorkerProxy'

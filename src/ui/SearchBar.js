@@ -63,6 +63,7 @@ export default class SearchBar extends Component {
           <form className="my-0 my-lg-0">
             <input
               type="search"
+              autoFocus={this.props.autoFocus}
               placeholder="Search text with regex..."
               onKeyDown={this.preventFormSubmitOnEnter.bind(this)}
               className={"form-control"+(this.state.invalidRegex ? ' text-danger' : '')}

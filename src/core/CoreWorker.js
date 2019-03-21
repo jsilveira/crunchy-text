@@ -27,13 +27,10 @@ export default class CoreWorker {
     this.preprocessors = [];
     this.drilldownActions = [];
 
-    this.preprocessorsClasses = {}
-    _.map(
-      [
-        RemoveSpecialChars,
-        RemoveStopWords
-      ],
-      cls => this.preprocessorsClasses[cls.name] = cls)
+    this.preprocessorsClasses = {
+      RemoveSpecialChars: RemoveSpecialChars,
+      RemoveStopWords: RemoveStopWords,
+    }
   }
 
   log(... msg) {
