@@ -1,8 +1,8 @@
 {
   "name": "crunchy-text",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
-  "main": "index.js",
+  "main": "lib/index.js",
   "scripts": {
     "start": "parcel public/index.html",
     "build-lib": "parcel build src/index.js --public-url . --no-minify --out-dir ./lib",
