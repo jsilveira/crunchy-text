@@ -26,7 +26,20 @@ export default class CoreWorkerProxy {
         this.pendingCalls[callId](res);
       }
     })
-    // this.worker.onerror(err => alert(err))
+
+    return new Proxy(this, {
+      get(target, propKey, receiver) {
+        const origMethod = target[propKey];
+
+        if(!target[propKey]) {
+          return (async function (...args) {
+            return target.proxyCall(propKey, ...args);
+          }).bind(target);
+        } else {
+          return target[propKey];
+        }
+      }
+    });
   }
 
   async proxyCall(method, ... args) {
@@ -38,25 +51,25 @@ export default class CoreWorkerProxy {
     return responsePromise;
   }
 
-  async loadData(data) {
-    return await this.proxyCall('loadData', data)
-  }
-
-  async setPreprocessors(preprocessors) {
-    return await this.proxyCall('setPreprocessors', preprocessors)
-  }
-
-  async search(searchObj) {
-    return await this.proxyCall('search', searchObj)
-  }
-
-  async drilldownAction(... params) {
-    return await this.proxyCall('drilldownAction', ... params)
-  }
-
-  async getFilteredData(... params) {
-    return await this.proxyCall('getFilteredData', ... params)
-  }
+  // async loadData(data) {
+  //   return await this.proxyCall('loadData', data)
+  // }
+  //
+  // async setPreprocessors(preprocessors) {
+  //   return await this.proxyCall('setPreprocessors', preprocessors)
+  // }
+  //
+  // async search(searchObj) {
+  //   return await this.proxyCall('search', searchObj)
+  // }
+  //
+  // async drilldownAction(... params) {
+  //   return await this.proxyCall('drilldownAction', ... params)
+  // }
+  //
+  // async getFilteredData(... params) {
+  //   return await this.proxyCall('getFilteredData', ... params)
+  // }
 
   onSearchDone(cbk) {
     this.onMsg('searchDone', cbk)
@@ -68,6 +81,10 @@ export default class CoreWorkerProxy {
 
   onLoadProgress(cbk) {
     this.onMsg('loadProgress',cbk)
+  }
+
+  onFileProgress(cbk) {
+    this.onMsg('loadFile',cbk)
   }
 
   onDrilldownStepsUpdate(cbk) {

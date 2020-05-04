@@ -15,12 +15,19 @@ async function fetchSample() {
 }
 
 
+let last = new Date().valueOf();
+console.logTime = (text, ... other) => {
+  let now = new Date().valueOf();
+  console.log(`[+${now - last}ms] ${text.toString()}`, ... other)
+  last = now;
+}
+
 export default class CrunchyText extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      textInput: {name: 'sample', data: []},
-      search: 'de \\w+',
+      fileInput: {name: 'sample', data: []},
+      search: '(?:luz|icono|testigo|simbolo|dibujo|alarma)(?: (?:la|el|del?))+ (\\w+)',
       results: null,
       drillDownSteps: [],
       inputSettings: null,
@@ -28,22 +35,35 @@ export default class CrunchyText extends Component {
     };
 
     this.searchChanged = this.searchChanged.bind(this);
-    this.inputDataChanged = this.inputDataChanged.bind(this);
 
     this.coreWorker = new CoreWorkerProxy();
     this.coreWorker.loadData(sampleData);
+
+    this.fileInputChanged = this.fileInputChanged.bind(this);
+
     setTimeout(() => {
       this.search();
     }, 20)
 
     this.coreWorker.onLoadProgress(progress => this.setState({progress}))
-    this.coreWorker.onSearchDone(results => this.setState({results, stats: results.stats, progress: ""}))
+
+    this.coreWorker.onSearchDone((results) => {
+      this.setState({results, stats: results.stats, progress: ""});
+    })
+
+    this.coreWorker.onFileProgress(({progress}) => {
+      console.logTime("Loading file", progress);
+      this.setState({progress})
+    })
+
     this.coreWorker.onPartialSearchResult((results) => {
+
       if(!results.extras) {
         results.extras = this.state.results.extras;
       }
       this.setState({ results, stats: results.stats });
     })
+
     this.coreWorker.onDrilldownStepsUpdate(steps => this.setState({drillDownSteps: steps}))
   }
 
@@ -59,14 +79,16 @@ export default class CrunchyText extends Component {
     }
   }
 
-  inputDataChanged(textInput) {
-    this.setState({textInput, progress: "Sending data to worker..."})
+  async fileInputChanged({name, file}) {
+    console.logTime(`Sending file ${name} to worker`)
 
-    // Set timeout to ensure progress is show
-    setTimeout(() => {
-      this.coreWorker.loadData(textInput.data)
-      this.search()
-    }, 1)
+    this.setState({fileInput: {name, file}})
+
+    await this.coreWorker.loadFile(file);
+
+    console.logTime(`File loaded by worker.`)
+
+    this.search()
   }
 
   preprocessorsChanged(preprocessors) {
@@ -82,7 +104,7 @@ export default class CrunchyText extends Component {
     const data = await this.coreWorker.getFilteredData();
     const exportedData = data.map(({itemText}) => itemText);
 
-    let fileName = `${this.state.textInput.name}-filtered.json`;
+    let fileName = `${this.state.fileInput.name}-filtered.json`;
 
     downloadFile(JSON.stringify(exportedData, true, 4), fileName, 'text/plain');
   }
@@ -102,16 +124,15 @@ export default class CrunchyText extends Component {
 
     return (
       <div>
-        <InputBar value={inputSettings}
-                  onChange={this.inputDataChanged.bind(this)}
-                  onInputProgress={this.onInputProgress.bind(this)}
+        <InputBar value={this.state.fileInput}
+                  onChange={this.fileInputChanged.bind(this)}
                   onPreprocessorChange={this.preprocessorsChanged.bind(this)}/>
 
-        <SearchBar value={search} onChange={this.searchChanged.bind(this)} onDrilldownAction={this.drilldownAction.bind(this)}/>
+        <SearchBar value={this.state.search} onChange={this.searchChanged.bind(this)} onDrilldownAction={this.drilldownAction.bind(this)}/>
 
-        <DrilldownFiltersBar drilldownSteps={drillDownSteps} onDrilldownAction={this.drilldownAction.bind(this)}/>
+        <DrilldownFiltersBar drilldownSteps={this.state.drillDownSteps} onDrilldownAction={this.drilldownAction.bind(this)}/>
 
-        <SearchResults progress={progress} res={results} onDownloadResults={this.downloadResults.bind(this)}/>
+        <SearchResults progress={this.state.progress} res={this.state.results} onDownloadResults={this.downloadResults.bind(this)}/>
       </div>
     );
   }

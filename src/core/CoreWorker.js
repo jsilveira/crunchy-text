@@ -3,6 +3,7 @@ import _ from "../lib/lodash.js"
 
 import RemoveSpecialChars from "./preprocessors/RemoveSpecialChars";
 import RemoveStopWords from "../core/preprocessors/RemoveStopWords";
+import {DataLoader} from "./DataLoader";
 
 let items = [];
 let filteredItems = [];
@@ -71,32 +72,37 @@ export default class CoreWorker {
         const itemText = filteredItems[i];
 
         let execRes = null;
-        let matches = [];
+        let matches = null;
         let lastIndex = null;
         while (execRes = re.exec(itemText)) {
           // Prevent infinite loop if the regex does not consume characters
           if(execRes.index === lastIndex)
             break;
 
-          let matchCount = topMatches[execRes[0]];
-          if(!matchCount)
-            uniqueCount++;
-          topMatches[execRes[0]] = (matchCount || 0) + 1
-          matches.push(execRes)
+          for(let groupIndex = 0; groupIndex < execRes.length;groupIndex++) {
+            let match = execRes[groupIndex] || "-";
+
+            topMatches[groupIndex] = topMatches[groupIndex] || {};
+            let matchCount = topMatches[groupIndex][match];
+            if (!matchCount)
+              uniqueCount++;
+            topMatches[groupIndex][match] = (matchCount || 0) + 1;
+          }
+          (matches = matches || []).push(execRes)
           lastIndex = execRes.index;
         }
 
-        if(matches.length > 0) {
+        if(matches) {
           this.matchesIndex.push(i);
-          if (sampleMatches.length < 100000) {
+          if (sampleMatches.length < 2000) {
             sampleMatches.push({itemText, matches: matches});
           }
         }
 
         // Check only in some iterations for performance
-        if(i % 100 === 0) {
+        if(i % 1000 === 0) {
           // Make periodical pauses to check search should not be cancelled
-          if (new Date() - lastPause > 30) {
+          if (new Date() - lastPause > 50) {
             lastPause = new Date();
             START = i;
 
@@ -123,7 +129,7 @@ export default class CoreWorker {
       if(i < filteredItems.length){
         nextTick = setTimeout(() => resume(START, query), 0);
       } else {
-        topMatches = _.sortBy(_.toPairs(topMatches), "1").reverse();
+        topMatches = _.mapValues(topMatches, groupTop => _.sortBy(_.toPairs(groupTop), "1").reverse());
         searching = false;
         lastSearchTime = new Date().valueOf() - startTime;
 
@@ -139,7 +145,10 @@ export default class CoreWorker {
             matchesCount: this.matchesIndex.length,
             totalCount: filteredItems.length
           },
-          extras: {topMatches}
+          extras: {
+            topMatches,
+            matchesCount: this.matchesIndex.length
+          }
         });
       }
     };
@@ -154,35 +163,44 @@ export default class CoreWorker {
   }
 
   preprocessData(data){
+    console.time('preprocessData')
     this.sendProgress("loadProgress", "Preprocessing " + data.length + " strings...");
 
     let lastStatus = new Date();
 
     items = [];
-    _.each(data, (doc, index) => {
+    let index = 0;
+    for(const doc of data) {
       try {
         let processedItem = doc;
+
         if(!_.isString(processedItem)) {
           if(_.isObject(processedItem)) {
             processedItem = JSON.stringify(processedItem)
           }
         }
 
-        this.preprocessors.forEach(preproc => processedItem = preproc.syncProcess(processedItem));
-        items.push(((processedItem || "").toString()))
+        for(const preproc of this.preprocessors) {
+          processedItem = preproc.syncProcess(processedItem)
+        }
+
+        items.push(processedItem || "");
       } catch (err) {
         console.error(err, doc)
       }
 
-      if (new Date() - lastStatus > 100) {
+      if ((index % 100 === 0) && new Date() - lastStatus > 100) {
         this.sendProgress("loadProgress", "Preprocessing " + data.length + " strings... (" + (100 * index / data.length).toFixed(1) + "%)");
         lastStatus = new Date();
       }
-    });
+      index++;
+    }
 
     this.sendProgress("loadProgress", "Done parsing and preprocessing data.");
 
     this.applyDrilldownFilters();
+
+    console.timeEnd('preprocessData')
   }
 
   applyDrilldownFilters() {
@@ -230,6 +248,70 @@ export default class CoreWorker {
     });
 
     this.sendProgress("loadProgress", "Done prefiltering data.");
+  }
+
+  error(err) {
+    this.sendProgress('error', err);
+  }
+
+  async loadFile(file) {
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onerror = (evt) => {
+        switch (evt.target.error.code) {
+          case evt.target.error.NOT_FOUND_ERR:
+            reject('File Not Found!')
+            break;
+          case evt.target.error.NOT_READABLE_ERR:
+            reject('File is not readable');
+            break;
+          case evt.target.error.ABORT_ERR:
+            break; // noop
+          default:
+            reject('An error occurred reading this file.');
+        }
+        this.sendProgress("loadFile", {loading: false});
+      };
+
+      reader.onprogress = ({lengthComputable, loaded, total}) => {
+        // evt is an ProgressEvent.
+        if (lengthComputable) {
+          let progressPer = loaded/total*100;
+          const percentLoaded = Math.round(progressPer);
+          if (percentLoaded < 100) {
+            // console.log(`${new Date()} Loading ${percentLoaded}% (${file.name})`);
+          }
+          this.sendProgress("loadFile", {progress: `Loading file ${progressPer.toFixed(0)}%`})
+        }
+      };
+
+      reader.onabort = (e) => {
+        reject('File read cancelled');
+      };
+
+      reader.onloadstart = (e) => {
+        this.sendProgress("loadFile", {progress: `Loading file 0%`})
+      };
+
+      reader.onload = (e) => {
+        this.sendProgress("loadFile", {progress: `Reading file structure...`})
+
+        console.time('parseData')
+        let data = DataLoader.loadFileData(file, reader.result);
+        console.timeEnd('parseData')
+
+        this.sendProgress("loadFile", {progress: `Preprocessing file...`})
+
+        this.loadData(data);
+
+        resolve();
+      };
+
+      // Read in the image file as a binary string.
+      reader.readAsText(file);
+    })
   }
 
   // Called by worker.js

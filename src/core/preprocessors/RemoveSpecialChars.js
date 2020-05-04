@@ -15,10 +15,11 @@ const cleanupRegexes = [
 ]
 
 
+const specialCharsregex = /[\u0300-\u036f]/g;
+
 function removeDiacriticsCasero(s) {
   if (s) {
-    s = s.toLowerCase();
-    cleanupRegexes.forEach(([regex, replace]) => s = s.replace(regex, replace))
+    return s.normalize("NFD").replace(specialCharsregex, '').toLowerCase();
   }
   return s;
 }
