@@ -1,10 +1,10 @@
 import React, {Component} from 'react';
 
-import InputBar from './InputBar.js';
-import SearchBar from './SearchBar.js';
-import SearchResults from './SearchResults.js';
+import InputBar from './input-bar/InputBar.js';
+import SearchBar from './search-bar/SearchBar.js';
+import SearchResults from './search-results/SearchResults.js';
 import CoreWorkerProxy from "../core/CoreWorkerProxy";
-import DrilldownFiltersBar from "./DrilldownFiltersBar";
+import DrilldownFiltersBar from "./search-bar/DrilldownFiltersBar";
 import downloadFile from "../utils/downloadFile";
 
 //const sampleURL = 'https://raw.githubusercontent.com/lutangar/cities.json/master/cities.json';

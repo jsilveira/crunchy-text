@@ -4,18 +4,10 @@ import _ from "../lib/lodash.js"
 import RemoveSpecialChars from "./preprocessors/RemoveSpecialChars";
 import RemoveStopWords from "../core/preprocessors/RemoveStopWords";
 import {DataLoader} from "./DataLoader";
+import SearchableText from "./searchable-data/SearchableText";
 
 let items = [];
 let filteredItems = [];
-
-let topMatches = {};
-
-let searching = false;
-let lastSearchTime = 0;
-let progressSent = false;
-let nextTick = 0;
-
-let re = new RegExp(/.*/g);
 
 let filterCount = 1;
 
@@ -42,120 +34,6 @@ export default class CoreWorker {
 
   sendProgress(msg, progressData){
     this.progressCbk(msg, progressData);
-  }
-
-  search(regex) {
-    this.lastSearch = regex;
-    if(!regex) {
-      regex = /.*/g;
-    }
-
-    if(filteredItems.length === 0) return;
-    re = regex;
-
-    searching = true;
-
-    progressSent = false;
-    topMatches = {};
-    let uniqueCount = 0;
-    let sampleMatches = [];
-    this.matchesIndex = [];
-
-    let startTime = new Date();
-    let searchId = new Date().valueOf();
-    let lastPause = new Date();
-    let lastProgressSent = new Date();
-
-    const resume = (START, query) => {
-      let i = 0;
-      for (i = START; i < filteredItems.length; i++) {
-        const itemText = filteredItems[i];
-
-        let execRes = null;
-        let matches = null;
-        let lastIndex = null;
-        while (execRes = re.exec(itemText)) {
-          // Prevent infinite loop if the regex does not consume characters
-          if(execRes.index === lastIndex)
-            break;
-
-          for(let groupIndex = 0; groupIndex < execRes.length;groupIndex++) {
-            let match = execRes[groupIndex] || "-";
-
-            topMatches[groupIndex] = topMatches[groupIndex] || {};
-            let matchCount = topMatches[groupIndex][match];
-            if (!matchCount)
-              uniqueCount++;
-            topMatches[groupIndex][match] = (matchCount || 0) + 1;
-          }
-          (matches = matches || []).push(execRes)
-          lastIndex = execRes.index;
-        }
-
-        if(matches) {
-          this.matchesIndex.push(i);
-          if (sampleMatches.length < 2000) {
-            sampleMatches.push({itemText, matches: matches});
-          }
-        }
-
-        // Check only in some iterations for performance
-        if(i % 1000 === 0) {
-          // Make periodical pauses to check search should not be cancelled
-          if (new Date() - lastPause > 50) {
-            lastPause = new Date();
-            START = i;
-
-            this.sendProgress("loadProgress", `Searching ${(START / filteredItems.length * 100).toFixed(0)}%`);
-
-            break;
-          }
-
-          if (new Date() - startTime > 35 && (!progressSent || new Date() - lastProgressSent > 250)) {
-            this.sendProgress('partialSearchResult', {
-              matchSamples: sampleMatches.slice(0, 50),
-              searchId: searchId,
-              stats: {
-                matchesCount: this.matchesIndex.length,
-                totalCount: filteredItems.length
-              }
-            });
-            lastProgressSent = new Date();
-            progressSent = true;
-          }
-        }
-      }
-
-      if(i < filteredItems.length){
-        nextTick = setTimeout(() => resume(START, query), 0);
-      } else {
-        topMatches = _.mapValues(topMatches, groupTop => _.sortBy(_.toPairs(groupTop), "1").reverse());
-        searching = false;
-        lastSearchTime = new Date().valueOf() - startTime;
-
-        // TODO: Needed for download results. Stop doing this EVERY TIME
-        // and only do it, searching again, if someone clicks export results
-        // Then change `if (sampleMatches.length < 100000) {` to `< 2000`
-        this.lastFilteredResults = sampleMatches;
-
-        this.sendProgress('searchDone', {
-          matchSamples: sampleMatches.slice(0, 2000),
-          stats: {
-            searchTime: lastSearchTime,
-            matchesCount: this.matchesIndex.length,
-            totalCount: filteredItems.length
-          },
-          extras: {
-            topMatches,
-            matchesCount: this.matchesIndex.length
-          }
-        });
-      }
-    };
-
-    clearTimeout(nextTick);
-
-    resume(0, regex.toString());
   }
 
   async getFilteredData() {
@@ -295,11 +173,11 @@ export default class CoreWorker {
         this.sendProgress("loadFile", {progress: `Loading file 0%`})
       };
 
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         this.sendProgress("loadFile", {progress: `Reading file structure...`})
 
         console.time('parseData')
-        let data = DataLoader.loadFileData(file, reader.result);
+        let data = await DataLoader.loadFileData(file, reader.result);
         console.timeEnd('parseData')
 
         this.sendProgress("loadFile", {progress: `Preprocessing file...`})
@@ -318,6 +196,7 @@ export default class CoreWorker {
   loadData(data) {
     this.data = data;
     this.preprocessData(data)
+    this.searchableData = new SearchableText(filteredItems);
   }
 
   // Called by worker.js
@@ -327,6 +206,11 @@ export default class CoreWorker {
     })
     this.preprocessData(this.data);
     this.search(this.lastSearch);
+  }
+
+  search(searchParams) {
+    this.lastSearch = searchParams;
+    this.searchableData.search(searchParams, (... args) => this.sendProgress(... args));
   }
 
   // Called by worker.js

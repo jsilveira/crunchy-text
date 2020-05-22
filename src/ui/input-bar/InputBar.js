@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import FileDrop from 'react-file-drop'
 import PreprocessorsSelector from "./PreprocessorsSelector";
-import "../../public/stylesheets/file-drop.css"
+import "../../../public/stylesheets/file-drop.css"
 
 export default class InputBar extends Component {
   constructor(props) {

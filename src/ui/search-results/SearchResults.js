@@ -1,7 +1,9 @@
 import React, {Component} from 'react';
-import downloadFile from "../utils/downloadFile";
-import styles from "../../public/stylesheets/search-results.less"
+import downloadFile from "../../utils/downloadFile";
+import styles from "../../../public/stylesheets/search-results.less"
 import _ from 'lodash';
+import {RegexSearchResult} from "./RegexSearchResult";
+import {TopMatches} from "./TopMatches";
 
 export default class SearchResults extends Component {
   constructor(props) {
@@ -121,57 +123,4 @@ export default class SearchResults extends Component {
   }
 }
 
-class RegexSearchResult extends React.PureComponent {
-  render() {
-    const parts = []
 
-    const {itemText, matches} = this.props.result;
-
-    let from = 0;
-
-    matches.forEach((m, i) => {
-      parts.push(itemText.slice(from, m.index));
-      let to = m.index+m[0].length;
-      parts.push(<mark className={styles.markj} key={i}>{itemText.slice(m.index,to)}</mark>);
-      from = to;
-    })
-
-    parts.push(itemText.slice(from));
-
-    return (
-      <div>{ parts }</div>
-    )
-  }
-}
-
-
-class TopMatches extends Component {
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-    let {matches, totalCount} = this.props;
-    let items = (matches || []);
-
-    const rows = []
-    items.slice(0, 100).forEach(([uniqueMatch, count], i) => {
-      rows.push(<tr key={i} className={""}>
-        <td className={"text-info text-right pr-3"}> {count.toString()} </td>
-        <td>{uniqueMatch.toString()} </td>
-        <td className={'small text-secondary text-right pl-2'}>{((count / totalCount * 100)).toFixed(1)}% </td>
-      </tr>)
-    });
-
-    return (
-      <div>
-        <h6>{this.props.title}</h6>
-        <table className={styles.TopMatchesTable}>
-          <tbody>
-          {rows}
-          </tbody>
-        </table>
-      </div>
-    );
-  }
-}
