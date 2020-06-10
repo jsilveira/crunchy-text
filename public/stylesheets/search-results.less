@@ -1,13 +1,24 @@
 .ResultsTable {
   width: 100%;
+  font-size: 14px;
+
   tr {
     margin-bottom: 2px;
+
+    &:last-child {
+      border-bottom: solid 1px #DDD;
+    }
   }
 
   td {
-    /*background-color: whitesmoke;*/
-    padding: 4px 10px;
-    border-top: dotted 1px gray;
+    padding: 2px 5px;
+    border-top: solid 1px #DDD;
+    border-left: solid 1px #DDD;
+    //word-break: break-all;
+
+    &:last-child {
+      border-right: solid 1px #DDD;
+    }
   }
 }
 

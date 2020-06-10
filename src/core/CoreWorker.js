@@ -4,12 +4,9 @@ import _ from "../lib/lodash.js"
 import RemoveSpecialChars from "./preprocessors/RemoveSpecialChars";
 import RemoveStopWords from "../core/preprocessors/RemoveStopWords";
 import {RawDataLoader} from "./data-loaders/RawDataLoader";
-import SearchableText from "./searchable-data/SearchableText";
+import SearchableTextList from "./searchable-data/SearchableTextList";
+import SearchableTabularList from "./searchable-data/SearchableTabularList";
 
-let items = [];
-let filteredItems = [];
-
-let filterCount = 1;
 
 export default class CoreWorker {
   progressCbk;
@@ -19,6 +16,11 @@ export default class CoreWorker {
 
     this.preprocessors = [];
     this.drilldownActions = [];
+
+    this.data = [];
+    this.preprocessedData = [];
+    this.filteredItems = [];
+    this.filterCount = 1;
 
     this.preprocessorsClasses = {
       RemoveSpecialChars: RemoveSpecialChars,
@@ -46,7 +48,7 @@ export default class CoreWorker {
 
     let lastStatus = new Date();
 
-    items = [];
+    this.preprocessedData = [];
     let index = 0;
     for(const doc of data) {
       try {
@@ -62,7 +64,7 @@ export default class CoreWorker {
           processedItem = preproc.syncProcess(processedItem)
         }
 
-        items.push(processedItem || "");
+        this.preprocessedData.push(processedItem || "");
       } catch (err) {
         console.error(err, doc)
       }
@@ -86,20 +88,20 @@ export default class CoreWorker {
     let lastStatus = new Date();
 
     if (this.drilldownActions.length === 0) {
-      filteredItems = items;
+      this.filteredItems = this.preprocessedData;
       return;
     }
 
-    filteredItems = [];
+    this.filteredItems = [];
 
     // REset affected items count
     for (let step of this.drilldownActions) {
       step.affectedCount = 0;
     }
 
-    _.each(items, (doc, index) => {
+    _.each(this.preprocessedData, (doc, index) => {
       if (new Date() - lastStatus > 100) {
-        this.sendProgress("loadProgress", "Preprocessing " + items.length + " strings... (" + (100 * index / items.length).toFixed(1) + "%)");
+        this.sendProgress("loadProgress", "Preprocessing " + this.preprocessedData.length + " strings... (" + (100 * index / this.preprocessedData.length).toFixed(1) + "%)");
         lastStatus = new Date();
       }
 
@@ -121,7 +123,7 @@ export default class CoreWorker {
           return;
       }
 
-      filteredItems.push(doc)
+      this.filteredItems.push(doc)
 
     });
 
@@ -150,6 +152,7 @@ export default class CoreWorker {
           default:
             reject('An error occurred reading this file.');
         }
+        console.error(evt.target.error);
         this.sendProgress("loadFile", {loading: false});
       };
 
@@ -174,16 +177,7 @@ export default class CoreWorker {
       };
 
       reader.onload = async (e) => {
-        this.sendProgress("loadFile", {progress: `Reading file structure...`})
-
-        console.time('parseData')
-        let data = await RawDataLoader.loadFileData(file, reader.result);
-        console.timeEnd('parseData')
-
-        this.sendProgress("loadFile", {progress: `Preprocessing file...`})
-
-        this.loadData(data);
-
+        await this.loadRawTextData(file,  reader.result);
         resolve();
       };
 
@@ -192,11 +186,41 @@ export default class CoreWorker {
     })
   }
 
+  async loadRawTextData(file, fileTextdata) {
+    this.sendProgress("loadFile", {progress: `Reading file structure...`})
+
+    console.time('parseData')
+    let data = await RawDataLoader.loadFileData(file, fileTextdata);
+    console.timeEnd('parseData')
+
+    this.sendProgress("loadFile", {progress: `Preprocessing file...`})
+
+    this.loadDataWithFormat(data);
+  }
+
   // Called by worker.js
-  loadData(data) {
+  loadDataWithFormat({dataFormat, data}) {
     this.data = data;
+    this.dataFormat = dataFormat;
+
+    // TODO: Add support to preprocess to different dataFormats
     this.preprocessData(data)
-    this.searchableData = new SearchableText(filteredItems);
+
+    this.updateSearchableData();
+  }
+
+  updateSearchableData() {
+    switch (this.dataFormat.type) {
+      case 'text':
+      case 'tabularText':
+        this.searchableData = new SearchableTextList(this.filteredItems, this.dataFormat);
+        break;
+      case 'tabular':
+        this.searchableData = new SearchableTabularList(this.filteredItems, this.dataFormat);
+        break;
+      default:
+        this.error(`Unsupported dataFormat "${this.dataFormat.type}"`);
+    }
   }
 
   // Called by worker.js
@@ -205,6 +229,7 @@ export default class CoreWorker {
       return new this.preprocessorsClasses[config.className](config);
     })
     this.preprocessData(this.data);
+    this.updateSearchableData();
     this.search(this.lastSearch);
   }
 
@@ -225,7 +250,7 @@ export default class CoreWorker {
         isOn: true,
         type: action === 'addFilter' ? 'filter' : 'exclude',
         affectedCount: 0,
-        id: filterCount++
+        id: this.filterCount++
       });
     } else if(action === 'toggleFilter') {
       let [filterId] = params;
@@ -242,6 +267,7 @@ export default class CoreWorker {
     }
 
     this.applyDrilldownFilters();
+    this.updateSearchableData();
     this.sendProgress('drilldownStepsUpdate', this.drilldownActions)
     this.search(this.lastSearch);
   }

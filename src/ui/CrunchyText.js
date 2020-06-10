@@ -9,6 +9,10 @@ import downloadFile from "../utils/downloadFile";
 
 //const sampleURL = 'https://raw.githubusercontent.com/lutangar/cities.json/master/cities.json';
 const sampleData = require('../../public/samples/sample-data.json');
+// const sampleTabularData = [
+//   "col A\tcolB\tcolC",
+//   "Short\tMedium length row\tLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+// ]
 
 async function fetchSample() {
   return await (await fetch(sampleURL)).json()
@@ -27,7 +31,8 @@ export default class CrunchyText extends Component {
     super(props);
     this.state = {
       fileInput: {name: 'sample', data: []},
-      search: '(?:luz|icono|testigo|simbolo|dibujo|alarma)(?: (?:la|el|del?))+ (\\w+)',
+      // search: '(?:luz|icono|testigo|simbolo|dibujo|alarma)(?: (?:la|el|del?))+ (\\w+)',
+      search: '',
       results: null,
       drillDownSteps: [],
       inputSettings: null,
@@ -37,7 +42,8 @@ export default class CrunchyText extends Component {
     this.searchChanged = this.searchChanged.bind(this);
 
     this.coreWorker = new CoreWorkerProxy();
-    this.coreWorker.loadData(sampleData);
+    this.coreWorker.loadDataWithFormat({dataFormat: 'text', data: sampleData});
+    // this.coreWorker.loadDataWithFormat({dataFormat: {type: 'tabularText', delimiter: '\t'}, data: sampleTabularData});
 
     this.fileInputChanged = this.fileInputChanged.bind(this);
 
@@ -102,7 +108,7 @@ export default class CrunchyText extends Component {
 
   async downloadResults() {
     const data = await this.coreWorker.getFilteredData();
-    const exportedData = data.map(({itemText}) => itemText);
+    const exportedData = data.map(({item}) => item);
 
     let fileName = `${this.state.fileInput.name}-filtered.json`;
 

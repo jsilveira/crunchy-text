@@ -1,9 +1,10 @@
 import _ from "../../lib/lodash";
 
 export default class SearchableList {
-  constructor(itemsList) {
+  constructor(itemsList, resultsFormat = {type: 'text'}) {
     this.searching = false;
     this.items = itemsList;
+    this.resultsFormat = resultsFormat;
   }
 
   preprocessParams(searchParameters) {
@@ -44,6 +45,7 @@ export default class SearchableList {
       if (now - startTime > 35 && (!this.progressSent || now - this.lastProgressSent > 250)) {
         sendProgress('partialSearchResult', {
           matchSamples: searchState.sampleMatches.slice(0, 50),
+          resultsFormat: this.resultsFormat,
           searchId: searchId,
           stats: {
             matchesCount: searchState.matchesIndex.length,
@@ -95,6 +97,7 @@ export default class SearchableList {
 
         sendProgress('searchDone', {
           matchSamples: searchState.sampleMatches.slice(0, 2000),
+          resultsFormat: this.resultsFormat,
           stats: {
             searchTime: lastSearchTime,
             matchesCount: searchState.matchesIndex.length,

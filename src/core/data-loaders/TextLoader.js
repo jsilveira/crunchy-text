@@ -1,5 +1,5 @@
 export default class TextLoader {
   async loadData(data, metadata) {
-    return data.split('\n');
+    return {dataFormat: {type: 'text'}, data: data.split('\n')};
   }
 }

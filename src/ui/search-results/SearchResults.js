@@ -11,6 +11,7 @@ export default class SearchResults extends Component {
 
     this.state = {
       selectedGroup: '0',
+      maxRows: 50
     }
   }
 
@@ -19,7 +20,7 @@ export default class SearchResults extends Component {
   }
 
   render() {
-    const {selectedGroup} = this.state;
+    const {selectedGroup, maxRows} = this.state;
 
     let startTime = new Date();
     let searchRes = this.props.res;
@@ -28,20 +29,47 @@ export default class SearchResults extends Component {
       return (<div className={"m-3"}><h5 className="pl-2">No data has been loaded yet</h5></div>)
     }
 
+    const {resultsFormat, matchSamples} = searchRes;
+
     let items = (searchRes.matchSamples || []);
     let stats = (searchRes.stats || {});
     let status = this.props.progress || `Searched ${stats.totalCount.toLocaleString()} items in ${stats.searchTime}ms`;
 
     const results = []
-    items.slice(0, 50).forEach((res, i) => {
-      results.push(<tr key={i.toString()+searchRes.searchId} className={""}>
-        <td> <RegexSearchResult result={res}/></td>
-      </tr>)
+    items.slice(0, maxRows).forEach((res, i) => {
+      const {item, matches} = res;
+      if(resultsFormat.type === 'tabularText') {
+        let rows = item;
+        if(_.isString(rows)) {
+          rows = rows.split(resultsFormat.delimiter);
+        }
+        results.push(<tr key={i.toString() + searchRes.searchId} className={""}>
+          { _.map(rows, (col,j) => <td key={j}>{col}</td>) }
+        </tr>)
+      } else {
+        results.push(<tr key={i.toString() + searchRes.searchId} className={""}>
+          <td><RegexSearchResult result={res}/></td>
+        </tr>)
+      }
     });
+
 
     if (!items.length) {
       results.push(<tr key={-1} className={""}>
         <td><strong>No hay resultados</strong></td>
+      </tr>)
+    }
+
+    if(items.length > maxRows) {
+      let message = `Show the other ${items.length - maxRows} rows...`;
+      if(items.length > (maxRows+500)) {
+        message = `Show 500 more rows...`;
+      }
+
+      results.push(<tr key={-1} className={""}>
+        <td colSpan={1000} className={'bg-light text-center'}>
+          <span className={'btn btn-link'} onClick={() => this.setState({maxRows: maxRows + 500})}>{message}</span>
+        </td>
       </tr>)
     }
 
@@ -115,6 +143,7 @@ export default class SearchResults extends Component {
               {results}
               </tbody>
             </table>
+            { }
           </div>
           <div className={"col-3 bg-light p-3"}>{extras}</div>
         </div>

@@ -1,11 +1,7 @@
 import _ from "../../lib/lodash";
 import SearchableList from "./SearchableList";
 
-export default class SearchableText extends SearchableList {
-  constructor(stringLines) {
-    super(stringLines);
-  }
-
+export default class SearchableTextList extends SearchableList {
   preprocessParams(regex) {
     if(!regex) {
       regex = /.*/g;
@@ -26,12 +22,12 @@ export default class SearchableText extends SearchableList {
     let topMatches = stats.topMatches;
 
     for (let i = start; i < this.items.length; i++) {
-      const itemText = this.items[i];
+      const text = this.items[i];
 
       let execRes = null;
       let matches = null;
       let lastIndex = null;
-      while ((execRes = re.exec(itemText))) {
+      while ((execRes = re.exec(text))) {
         // Prevent infinite loop if the regex does not consume characters
         if(execRes.index === lastIndex)
           break;
@@ -52,7 +48,7 @@ export default class SearchableText extends SearchableList {
       if(matches) {
         matchesIndex.push(i);
         if (sampleMatches.length < 2000) {
-          sampleMatches.push({itemText, matches});
+          sampleMatches.push({item: text, matches});
         }
       }
 
