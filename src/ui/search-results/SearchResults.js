@@ -101,7 +101,7 @@ export default class SearchResults extends Component {
               <div className={"col-9 p-0 pl-3"}>
                 <h5 className={'pl-2'}>
                   {stats.matchesCount.toLocaleString()} matches &nbsp;
-                  <em className={"text-info"}>{status}</em>
+                  <em className={"text-info small"}>{status}</em>
                 </h5>
               </div>
               <div className={"col-3 p-0 text-right zoom-small"}>

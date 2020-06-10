@@ -3,7 +3,7 @@ import _ from "../lib/lodash.js"
 
 import RemoveSpecialChars from "./preprocessors/RemoveSpecialChars";
 import RemoveStopWords from "../core/preprocessors/RemoveStopWords";
-import {DataLoader} from "./DataLoader";
+import {RawDataLoader} from "./data-loaders/RawDataLoader";
 import SearchableText from "./searchable-data/SearchableText";
 
 let items = [];
@@ -177,7 +177,7 @@ export default class CoreWorker {
         this.sendProgress("loadFile", {progress: `Reading file structure...`})
 
         console.time('parseData')
-        let data = await DataLoader.loadFileData(file, reader.result);
+        let data = await RawDataLoader.loadFileData(file, reader.result);
         console.timeEnd('parseData')
 
         this.sendProgress("loadFile", {progress: `Preprocessing file...`})

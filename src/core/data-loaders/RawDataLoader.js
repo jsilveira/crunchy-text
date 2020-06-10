@@ -1,8 +1,8 @@
-import CSVLoader from "./data-loaders/CSVLoader";
-import TextLoader from "./data-loaders/TextLoader";
-import JSONLoader from "./data-loaders/JSONLoader";
+import CSVLoader from "./CSVLoader";
+import TextLoader from "./TextLoader";
+import JSONLoader from "./JSONLoader";
 
-export class DataLoader {
+export class RawDataLoader {
   static async loadFileData(file, data) {
 
     const loaders = {
