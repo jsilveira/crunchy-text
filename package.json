@@ -6,7 +6,7 @@
   "scripts": {
     "start": "parcel public/index.html",
     "build-lib": "parcel build src/index.js --public-url . --no-minify --out-dir ./lib",
-    "build": "rm dist/* & parcel build public/index.html"
+    "build": "rm dist/* & cp CNAME dist/CNAME & parcel build public/index.html"
   },
   "author": "",
   "license": "ISC",

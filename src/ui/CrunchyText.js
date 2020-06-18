@@ -1,4 +1,6 @@
 import React, {Component} from 'react';
+import _ from 'lodash';
+
 
 import InputBar from './input-bar/InputBar.js';
 import SearchBar from './search-bar/SearchBar.js';
@@ -42,7 +44,7 @@ export default class CrunchyText extends Component {
     this.searchChanged = this.searchChanged.bind(this);
 
     this.coreWorker = new CoreWorkerProxy();
-    this.coreWorker.loadDataWithFormat({dataFormat: 'text', data: sampleData});
+    this.coreWorker.loadDataWithFormat({dataFormat: {type: 'text'}, data: sampleData});
     // this.coreWorker.loadDataWithFormat({dataFormat: {type: 'tabularText', delimiter: '\t'}, data: sampleTabularData});
 
     this.fileInputChanged = this.fileInputChanged.bind(this);
@@ -63,7 +65,6 @@ export default class CrunchyText extends Component {
     })
 
     this.coreWorker.onPartialSearchResult((results) => {
-
       if(!results.extras) {
         results.extras = this.state.results.extras;
       }
@@ -71,10 +72,6 @@ export default class CrunchyText extends Component {
     })
 
     this.coreWorker.onDrilldownStepsUpdate(steps => this.setState({drillDownSteps: steps}))
-  }
-
-  onInputProgress(progress) {
-    this.setState({progress})
   }
 
   search() {

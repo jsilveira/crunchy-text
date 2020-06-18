@@ -5,6 +5,22 @@ import _ from 'lodash';
 import {RegexSearchResult} from "./RegexSearchResult";
 import {TopMatches} from "./TopMatches";
 
+function getHtmlTableResultRow(collection) {
+  let cols = [];
+
+  for (let i = 0; i < collection.length; i++) {
+    const col = collection[i];
+    const hasLongWord = col.match(/\S{50,}/);
+    let cssClass = hasLongWord ? styles.withLongWords : '';
+    // cols.push(<td key={i} className={cssClass}>{col}</td>);
+    cols.push(`<td class="${cssClass}">${col}</td>`);
+  }
+  cols = cols.join('');
+
+  // return <tr className={""}>{cols}</tr>;
+  return `<tr>${cols}</tr>`;
+}
+
 export default class SearchResults extends Component {
   constructor(props) {
     super(props);
@@ -19,40 +35,21 @@ export default class SearchResults extends Component {
     downloadFile(JSON.stringify(matches, true, 4), 'unique-matches.json')
   }
 
-  render() {
-    const {selectedGroup, maxRows} = this.state;
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    console.log("Render time", ((prevProps || {}).res || {}).searchId, new Date() - this.startTime)
+  }
 
-    let startTime = new Date();
-    let searchRes = this.props.res;
-
-    if(!searchRes)  {
-      return (<div className={"m-3"}><h5 className="pl-2">No data has been loaded yet</h5></div>)
-    }
-
+  buildResultsTable(searchRes, maxRows) {
     const {resultsFormat, matchSamples} = searchRes;
-
-    let items = (searchRes.matchSamples || []);
-    let stats = (searchRes.stats || {});
-    let status = this.props.progress || `Searched ${stats.totalCount.toLocaleString()} items in ${stats.searchTime}ms`;
+    const items = matchSamples || [];
 
     const results = []
-    items.slice(0, maxRows).forEach((res, i) => {
-      const {item, matches} = res;
-      if(resultsFormat.type === 'tabularText') {
-        let rows = item;
-        if(_.isString(rows)) {
-          rows = rows.split(resultsFormat.delimiter);
-        }
-        results.push(<tr key={i.toString() + searchRes.searchId} className={""}>
-          { _.map(rows, (col,j) => <td key={j}>{col}</td>) }
-        </tr>)
-      } else {
-        results.push(<tr key={i.toString() + searchRes.searchId} className={""}>
-          <td><RegexSearchResult result={res}/></td>
-        </tr>)
-      }
-    });
 
+    items.slice(0, maxRows).forEach((res, i) => {
+      results.push(<tr key={i.toString() + searchRes.searchId} className={""}>
+        <td><RegexSearchResult result={res}/></td>
+      </tr>)
+    });
 
     if (!items.length) {
       results.push(<tr key={-1} className={""}>
@@ -60,18 +57,90 @@ export default class SearchResults extends Component {
       </tr>)
     }
 
-    if(items.length > maxRows) {
+    return <table className={styles.ResultsTable}>
+      <tbody>{results}</tbody>
+    </table>
+  }
+
+  buildTabularResultsTable(searchRes, maxRows) {
+    const {resultsFormat, matchSamples} = searchRes;
+    const items = matchSamples || [];
+    const results = []
+
+    if(resultsFormat.type === 'tabularText' && resultsFormat.columns) {
+      results.push(`<tr>${ _.map(resultsFormat.columns, (col,j) => `<th>${col}</th>`).join('') }</tr>`);
+    }
+
+    items.slice(0, maxRows).forEach((res, i) => {
+      const {item, matches} = res;
+      let cols = item;
+      if (_.isString(cols)) {
+        for (let j = matches.length - 1; j >= 0; j--) {
+          const m = matches[j];
+          if (m[0]) {
+            cols = cols.slice(0, m.index) + `<mark class="${styles.markj}">${m[0]}</mark>` + cols.slice(m.index + m[0].length);
+          }
+        }
+        cols = cols.split(resultsFormat.delimiter);
+      }
+      if (cols.length) {
+        results.push(getHtmlTableResultRow(cols));
+      }
+    });
+
+    if (!items.length) {
+      results.push(`<tr><td><strong>No hay resultados</strong></td></tr>`);
+    }
+
+    return <table className={styles.ResultsTable}>
+      <tbody dangerouslySetInnerHTML={{__html: results.join('')}}/>
+    </table>
+  }
+
+  buildResults(searchRes, maxRows) {
+    const {resultsFormat, matchSamples} = searchRes;
+
+    let items = (matchSamples || []);
+
+    let table;
+    if (resultsFormat.type === 'tabularText') {
+      table = this.buildTabularResultsTable(searchRes, maxRows);
+    } else {
+      table = this.buildResultsTable(searchRes, maxRows);
+    }
+
+    let pagination = null;
+    if (items.length > maxRows) {
       let message = `Show the other ${items.length - maxRows} rows...`;
-      if(items.length > (maxRows+500)) {
+      if (items.length > (maxRows + 500)) {
         message = `Show 500 more rows...`;
       }
 
-      results.push(<tr key={-1} className={""}>
-        <td colSpan={1000} className={'bg-light text-center'}>
-          <span className={'btn btn-link'} onClick={() => this.setState({maxRows: maxRows + 500})}>{message}</span>
-        </td>
-      </tr>)
+      pagination = <div className={'text-center mt-2'}>
+        <span className={'btn btn-primary'} onClick={() => this.setState({maxRows: maxRows + 500})}>{message}</span>
+      </div>
     }
+
+    return <div>
+      {table}
+      {pagination}
+    </div>;
+  }
+
+  render() {
+    const {selectedGroup, maxRows} = this.state;
+
+    this.startTime = new Date();
+    let searchRes = this.props.res;
+
+    if (!searchRes) {
+      return (<div className={"m-3"}><h5 className="pl-2">No data has been loaded yet</h5></div>)
+    }
+
+    const table = this.buildResults(searchRes, maxRows);
+
+    let stats = (searchRes.stats || {});
+    let status = this.props.progress || `Searched ${stats.totalCount.toLocaleString()} items in ${stats.searchTime}ms`;
 
     const extras = [];
 
@@ -88,9 +157,9 @@ export default class SearchResults extends Component {
             {
               _.map(topMatches, (tops, groupNumber) => <li key={groupNumber} className={'nav-item'}>
                 <a
-                   href={'javascript:void(0)'}
-                   className={`nav-link px-2 ${groupNumber === selectedGroup ? 'active' : ''}`}
-                   onClick={() => this.setState({selectedGroup: groupNumber})}>
+                  href={'javascript:void(0)'}
+                  className={`nav-link px-2 ${groupNumber === selectedGroup ? 'active' : ''}`}
+                  onClick={() => this.setState({selectedGroup: groupNumber})}>
                   {groupNumber == '0' ? 'All' : `(# ${groupNumber})`}
                 </a>
               </li>)
@@ -100,7 +169,9 @@ export default class SearchResults extends Component {
 
         extras.push(<h5 key={'title'}>
           Unique matches: {top.length.toLocaleString()}&nbsp;
-          <span className='zoom-small btn btn-sm btn-link ml-1 p-0' onClick={() => this.downloadUniqueMatches(top.map(t => t[0]))} title={`Download ${top.length} unique matches as json`}>
+          <span className='zoom-small btn btn-sm btn-link ml-1 p-0'
+                onClick={() => this.downloadUniqueMatches(top.map(t => t[0]))}
+                title={`Download ${top.length} unique matches as json`}>
              <i className="material-icons align-middle">file_download</i>
           </span>
         </h5>)
@@ -119,36 +190,30 @@ export default class SearchResults extends Component {
       }
     }
 
-    // console.log("Render time", new Date() - startTime)
-
-    return (
-      <div className="container-fluid">
-        <div className={"row"}>
-          <div className={"col-9 p-3"}>
-            <div className={"row"}>
-              <div className={"col-9 p-0 pl-3"}>
-                <h5 className={'pl-2'}>
-                  {stats.matchesCount.toLocaleString()} matches &nbsp;
-                  <em className={"text-info small"}>{status}</em>
-                </h5>
-              </div>
-              <div className={"col-3 p-0 text-right zoom-small"}>
-               <span className='btn btn-sm btn-link' onClick={this.props.onDownloadResults} title={`Download ${stats.matchesCount} results as json`}>
+    let result = <div className="container-fluid bg-light">
+      <div className={"row"}>
+        <div className={"col-9 p-3"} style={{overflow: 'auto'}}>
+          <div className={"row"}>
+            <div className={"col-9 p-0 pl-3"}>
+              <h5 className={'pl-2'}>
+                {stats.matchesCount.toLocaleString()} matches &nbsp;
+                <em className={"text-info small"}>{status}</em>
+              </h5>
+            </div>
+            <div className={"col-3 p-0 text-right zoom-small"}>
+               <span className='btn btn-sm btn-link' onClick={this.props.onDownloadResults}
+                     title={`Download ${stats.matchesCount} results as json`}>
                  <i className="material-icons align-middle">file_download</i>
                 </span>
-              </div>
             </div>
-            <table className={styles.ResultsTable}>
-              <tbody>
-              {results}
-              </tbody>
-            </table>
-            { }
           </div>
-          <div className={"col-3 bg-light p-3"}>{extras}</div>
+          {table}
         </div>
+        <div className={"col-3 bg-light p-3"}>{extras}</div>
       </div>
-    );
+    </div>;
+
+    return result;
   }
 }
 
