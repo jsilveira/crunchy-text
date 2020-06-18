@@ -39,7 +39,8 @@ export default class CoreWorker {
   }
 
   async getFilteredData() {
-    return this.lastFilteredResults;
+    //TODO: Breaking encapsulation. Fix. Also fix exported format ¿JSON? ¿CSV?
+    return _.map(this.searchableData.lastFilteredResults, i => this.data[i]);
   }
 
   preprocessData(data){

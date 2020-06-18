@@ -104,8 +104,7 @@ export default class CrunchyText extends Component {
   }
 
   async downloadResults() {
-    const data = await this.coreWorker.getFilteredData();
-    const exportedData = data.map(({item}) => item);
+    const exportedData = await this.coreWorker.getFilteredData();
 
     let fileName = `${this.state.fileInput.name}-filtered.json`;
 

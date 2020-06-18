@@ -93,7 +93,7 @@ export default class SearchableList {
         // TODO: Needed for download results. Stop doing this EVERY TIME
         // and only do it, searching again, if someone clicks export results
         // Then change `if (sampleMatches.length < 100000) {` to `< 2000`
-        this.lastFilteredResults = searchState.sampleMatches;
+        this.lastFilteredResults = searchState.matchesIndex;
 
         sendProgress('searchDone', {
           matchSamples: searchState.sampleMatches.slice(0, 2000),
