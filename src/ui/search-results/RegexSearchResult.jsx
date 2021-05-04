@@ -1,5 +1,4 @@
 import React from "react";
-import styles from "../../../public/stylesheets/search-results.module.scss";
 
 export class RegexSearchResult extends React.PureComponent {
   render() {
@@ -12,7 +11,7 @@ export class RegexSearchResult extends React.PureComponent {
     matches.forEach((m, i) => {
       parts.push(item.slice(from, m.index));
       let to = m.index + m[0].length;
-      parts.push(<mark className={styles.markj} key={i}>{item.slice(m.index, to)}</mark>);
+      parts.push(<mark className={'markj'} key={i}>{item.slice(m.index, to)}</mark>);
       from = to;
     })
 

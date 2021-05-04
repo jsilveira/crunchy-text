@@ -1,6 +1,5 @@
 import React, {Component} from 'react';
 import downloadFile from "../../utils/downloadFile";
-import styles from "../../../public/stylesheets/search-results.module.scss"
 import _ from 'lodash';
 import {RegexSearchResult} from "./RegexSearchResult";
 import {TopMatches} from "./TopMatches";
@@ -13,7 +12,7 @@ function getHtmlTableResultRow(collection) {
   for (let i = 0; i < collection.length; i++) {
     const col = collection[i];
     const hasLongWord = col.match(/\S{50,}/);
-    let cssClass = hasLongWord ? styles.withLongWords : '';
+    let cssClass = hasLongWord ? 'withLongWords' : '';
     // cols.push(<td key={i} className={cssClass}>{col}</td>);
     cols.push(`<td class="${cssClass}">${col}</td>`);
   }
@@ -32,7 +31,7 @@ class SearchResultsTable extends React.PureComponent {
 
     items.slice(0, maxRows).forEach((res, i) => {
       results.push(<tr key={i.toString() + searchRes.searchId} className={""}>
-        <td className={styles.rowNumber}>{i+1}</td>
+        <td className={'rowNumber'}>{i+1}</td>
         <td><RegexSearchResult result={res}/></td>
       </tr>)
     });
@@ -43,7 +42,7 @@ class SearchResultsTable extends React.PureComponent {
       </tr>)
     }
 
-    return <table className={styles.ResultsTable}>
+    return <table className={'ResultsTable'}>
       <tbody>{results}</tbody>
     </table>
   }
@@ -64,7 +63,7 @@ class SearchResultsTable extends React.PureComponent {
         for (let j = matches.length - 1; j >= 0; j--) {
           const m = matches[j];
           if (m[0]) {
-            cols = cols.slice(0, m.index) + `<mark class="${styles.markj}">${m[0]}</mark>` + cols.slice(m.index + m[0].length);
+            cols = cols.slice(0, m.index) + `<mark class="markj">${m[0]}</mark>` + cols.slice(m.index + m[0].length);
           }
         }
         cols = cols.split(resultsFormat.delimiter);
@@ -78,7 +77,7 @@ class SearchResultsTable extends React.PureComponent {
       results.push(`<tr><td><strong>No hay resultados</strong></td></tr>`);
     }
 
-    return <table className={styles.ResultsTable}>
+    return <table className={'ResultsTable'}>
       <tbody dangerouslySetInnerHTML={{__html: results.join('')}}/>
     </table>
   }

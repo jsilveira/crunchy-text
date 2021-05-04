@@ -1,5 +1,4 @@
 import React, {Component} from "react";
-import styles from "../../../public/stylesheets/search-results.module.scss";
 
 export class TopMatches extends Component {
   constructor(props) {
@@ -22,7 +21,7 @@ export class TopMatches extends Component {
     return (
       <div>
         <h6>{this.props.title}</h6>
-        <table className={styles.TopMatchesTable}>
+        <table className={'TopMatchesTable'}>
           <tbody>
           {rows}
           </tbody>
