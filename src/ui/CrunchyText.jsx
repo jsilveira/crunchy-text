@@ -10,7 +10,8 @@ import DrilldownFiltersBar from "./search-bar/DrilldownFiltersBar";
 import downloadFile from "../utils/downloadFile";
 
 //const sampleURL = 'https://raw.githubusercontent.com/lutangar/cities.json/master/cities.json';
-import sampleData from '../../public/samples/sample-data.json';
+// import sampleData from '../../public/samples/sample-data.json';
+const sampleData = [];
 // const sampleTabularData = [
 //   "col A\tcolB\tcolC",
 //   "Short\tMedium length row\tLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
@@ -88,7 +89,7 @@ export default class CrunchyText extends Component {
     let pendingId = null;
     this.coreWorker.onPartialSearchResult((results) => {
       if(!results.extras) {
-        results.extras = this.state.results.extras;
+        results.extras = this.state.results?.extras;
       }
       const update = () => {
         console.log("%cSearch progress: "+results.searchId, 'color: red;')
