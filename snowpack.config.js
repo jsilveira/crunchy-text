@@ -10,5 +10,9 @@ module.exports = {
   buildOptions: {
     out: 'dist',
     metaUrlPath: 'snowpack'
+  },
+  optimize: {
+    bundle: true,
+    minify: true
   }
 };
