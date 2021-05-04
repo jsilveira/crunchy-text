@@ -2,13 +2,13 @@
 module.exports = {
   mount: {
     public: '/',
-    src: '/docs',
+    src: '/dist',
   },
   plugins: [
     '@snowpack/plugin-sass',
   ],
   buildOptions: {
-    out: 'docs',
+    out: 'dist',
     metaUrlPath: 'snowpack'
   },
   optimize: {
