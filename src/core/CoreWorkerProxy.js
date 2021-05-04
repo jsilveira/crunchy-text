@@ -5,7 +5,7 @@ export default class CoreWorkerProxy {
     if(singletonWorker) {
       singletonWorker.terminate();
     }
-    this.worker = new Worker(new URL('../worker_bundle.js', import.meta.url));
+    this.worker = new Worker(new URL('/dist/worker_bundle.js', import.meta.url));
     singletonWorker = this.worker;
 
     this.msgCbks = {}
