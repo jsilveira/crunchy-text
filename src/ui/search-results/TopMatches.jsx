@@ -1,5 +1,5 @@
 import React, {Component} from "react";
-import styles from "../../../public/stylesheets/search-results.less";
+import styles from "../../../public/stylesheets/search-results.module.scss";
 
 export class TopMatches extends Component {
   constructor(props) {

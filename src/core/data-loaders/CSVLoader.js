@@ -1,5 +1,5 @@
 import TextLoader from "./TextLoader";
-import _ from 'lodash'
+import _ from '../../lib/lodash'
 
 export default class CSVLoader extends TextLoader {
   async solveCSVFormat(data, metadata) {

@@ -1,12 +1,11 @@
 .ResultsTable {
   width: 100%;
   font-size: 14px;
-  background-color: white;
 
   tr {
     margin-bottom: 2px;
 
-    &:last-child {
+    &:last-child td {
       border-bottom: solid 1px #DDD;
     }
   }
@@ -15,6 +14,7 @@
     padding: 2px 5px;
     border-top: solid 1px #DDD;
     border-left: solid 1px #DDD;
+    background-color: white;
     //word-break: break-all;
 
     &:last-child {
@@ -23,6 +23,15 @@
 
     &.withLongWords {
       word-break: break-all;
+    }
+
+    &.rowNumber {
+      background-color: transparent;
+      font-size: 0.8em;
+      width: 50px;
+      text-align: center;
+      padding: 5px;
+      color: gray;
     }
   }
 

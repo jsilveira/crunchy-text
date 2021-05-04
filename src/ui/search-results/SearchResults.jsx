@@ -1,9 +1,11 @@
 import React, {Component} from 'react';
 import downloadFile from "../../utils/downloadFile";
-import styles from "../../../public/stylesheets/search-results.less"
+import styles from "../../../public/stylesheets/search-results.module.scss"
 import _ from 'lodash';
 import {RegexSearchResult} from "./RegexSearchResult";
 import {TopMatches} from "./TopMatches";
+
+import InfiniteScroll from 'react-infinite-scroller/index';
 
 function getHtmlTableResultRow(collection) {
   let cols = [];
@@ -21,24 +23,7 @@ function getHtmlTableResultRow(collection) {
   return `<tr>${cols}</tr>`;
 }
 
-export default class SearchResults extends Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      selectedGroup: '0',
-      maxRows: 50
-    }
-  }
-
-  downloadUniqueMatches(matches) {
-    downloadFile(JSON.stringify(matches, true, 4), 'unique-matches.json')
-  }
-
-  componentDidUpdate(prevProps, prevState, snapshot) {
-    console.log("Render time", ((prevProps || {}).res || {}).searchId, new Date() - this.startTime)
-  }
-
+class SearchResultsTable extends React.PureComponent {
   buildResultsTable(searchRes, maxRows) {
     const {resultsFormat, matchSamples} = searchRes;
     const items = matchSamples || [];
@@ -47,6 +32,7 @@ export default class SearchResults extends Component {
 
     items.slice(0, maxRows).forEach((res, i) => {
       results.push(<tr key={i.toString() + searchRes.searchId} className={""}>
+        <td className={styles.rowNumber}>{i+1}</td>
         <td><RegexSearchResult result={res}/></td>
       </tr>)
     });
@@ -97,10 +83,16 @@ export default class SearchResults extends Component {
     </table>
   }
 
-  buildResults(searchRes, maxRows) {
-    const {resultsFormat, matchSamples} = searchRes;
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    console.log(`%cResults render '${this.props.searchRes.searchId}' ${new Date() - this.startTime}ms`, 'color: blue')
+  }
 
-    let items = (matchSamples || []);
+  render() {
+    this.startTime = new Date();
+
+    const {searchRes, maxRows} = this.props;
+    const {resultsFormat} = searchRes;
+
 
     let table;
     if (resultsFormat.type === 'tabularText') {
@@ -109,6 +101,47 @@ export default class SearchResults extends Component {
       table = this.buildResultsTable(searchRes, maxRows);
     }
 
+    return <div>
+      {table}
+    </div>;
+  }
+}
+
+export default class SearchResults extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      selectedGroup: '0',
+      maxRows: 50
+    }
+  }
+
+  static getDerivedStateFromProps(props, state) {
+    if(state.res !== props.res) {
+      console.log("Resetie", props, state);
+      return {
+        maxRows: 50,
+        res: props.res
+      }
+    }
+    return null;
+  }
+
+  downloadUniqueMatches(matches) {
+    downloadFile(JSON.stringify(matches, true, 4), 'unique-matches.json')
+  }
+
+  render() {
+    const {selectedGroup, maxRows} = this.state;
+
+    let searchRes = this.props.res;
+
+    if (!searchRes) {
+      return (<div className={"m-3"}><h5 className="pl-2">No data has been loaded yet</h5></div>)
+    }
+
+    let items = (searchRes.matchSamples || []);
     let pagination = null;
     if (items.length > maxRows) {
       let message = `Show the other ${items.length - maxRows} rows...`;
@@ -121,23 +154,16 @@ export default class SearchResults extends Component {
       </div>
     }
 
-    return <div>
-      {table}
-      {pagination}
-    </div>;
-  }
-
-  render() {
-    const {selectedGroup, maxRows} = this.state;
-
-    this.startTime = new Date();
-    let searchRes = this.props.res;
-
-    if (!searchRes) {
-      return (<div className={"m-3"}><h5 className="pl-2">No data has been loaded yet</h5></div>)
-    }
-
-    const table = this.buildResults(searchRes, maxRows);
+    const table = <InfiniteScroll
+      pageStart={0}
+      loadMore={() => this.setState({maxRows: maxRows + 50})}
+      hasMore={items.length > maxRows}
+      loader={<div className="loader" key={0}>Loading ...</div>}>
+      <div>
+        <SearchResultsTable searchRes={searchRes} maxRows={maxRows}/>
+        {/*{pagination}*/}
+      </div>
+    </InfiniteScroll>;
 
     let stats = (searchRes.stats || {});
     let status = this.props.progress || `Searched ${stats.totalCount.toLocaleString()} items in ${stats.searchTime}ms`;

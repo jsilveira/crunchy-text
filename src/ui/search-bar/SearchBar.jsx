@@ -11,7 +11,6 @@ export default class SearchBar extends Component {
   handleChange(event) {
     const value = event.target.value;
 
-
     try {
       // Try converting it to regex
       new RegExp(value)
@@ -49,12 +48,12 @@ export default class SearchBar extends Component {
   }
 
   // changes from the outside
-  componentWillReceiveProps(nextProps) {
-    const value = nextProps.value;
-    if (this.state.value != value) {
-      this.setState({ value });
-    }
-  }
+  // componentWillReceiveProps(nextProps) {
+  //   const value = nextProps.value;
+  //   if (this.state.value != value) {
+  //     this.setState({ value });
+  //   }
+  // }
 
   render() {
     return (

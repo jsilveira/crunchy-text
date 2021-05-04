@@ -4,27 +4,29 @@
   "description": "",
   "main": "lib/index.js",
   "scripts": {
-    "start": "parcel public/index.html",
-    "build-lib": "parcel build src/index.js --public-url . --no-minify --out-dir ./lib",
-    "build": "rm dist/* & cp CNAME dist/CNAME & parcel build public/index.html"
+    "start": "set NODE_ENV=development & snowpack dev",
+    "start-worker": "esbuild src/worker.js --bundle --outfile=src/worker_bundle.js --watch",
+    "build": "esbuild src/worker.js --bundle --outfile=src/worker_bundle.js --minify & snowpack build & cp CNAME dist/CNAME",
+    "old-build-lib": "parcel build src/index.js --public-url . --no-minify --out-dir ./lib",
+    "old-build-gh": "rm dist/* & cp CNAME dist/CNAME & parcel build public/index.html"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "babel-polyfill": "^6.26.0",
+    "@snowpack/plugin-sass": "^1.4.0",
+    "esbuild": "^0.11.18",
     "lodash": "^4.17.13",
-    "react": "^16.2.0",
-    "react-dom": "^16.2.0",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
     "react-file-drop": "^0.1.9",
+    "react-infinite-scroller": "^1.2.4",
+    "snowpack": "^3.3.7",
     "stylesheets": "0.0.5"
   },
   "devDependencies": {
-    "babel-core": "^6.26.3",
-    "babel-plugin-transform-object-rest-spread": "^6.26.0",
-    "babel-preset-env": "^1.7.0",
-    "babel-preset-react": "^6.24.1",
     "cssnano": "^4.1.10",
     "less": "^3.11.1",
-    "postcss-modules": "^1.5.0"
+    "postcss-modules": "^1.5.0",
+    "snowpack-plugin-less": "^1.0.7"
   }
 }

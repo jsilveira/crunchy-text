@@ -33,7 +33,7 @@ export default class SearchableList {
 
     if(this.items.length === 0) return;
 
-    let searchId = new Date().valueOf();
+    let searchId = searchParameters;
 
     // Save the "current" search, on ignore any other previous partial or final result
     this.lastSearchId = searchId;
@@ -98,6 +98,7 @@ export default class SearchableList {
         sendProgress('searchDone', {
           matchSamples: searchState.sampleMatches.slice(0, 2000),
           resultsFormat: this.resultsFormat,
+          searchId: searchId,
           stats: {
             searchTime: lastSearchTime,
             matchesCount: searchState.matchesIndex.length,

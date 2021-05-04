@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { render } from 'react-dom';
 
-import CrunchyText from './ui/CrunchyText.js';
+import CrunchyText from './ui/CrunchyText.jsx';
 
 
 class App extends Component {

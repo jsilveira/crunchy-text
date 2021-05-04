@@ -2,15 +2,15 @@ import React, {Component} from 'react';
 import _ from 'lodash';
 
 
-import InputBar from './input-bar/InputBar.js';
-import SearchBar from './search-bar/SearchBar.js';
-import SearchResults from './search-results/SearchResults.js';
+import InputBar from './input-bar/InputBar';
+import SearchBar from './search-bar/SearchBar';
+import SearchResults from './search-results/SearchResults';
 import CoreWorkerProxy from "../core/CoreWorkerProxy";
 import DrilldownFiltersBar from "./search-bar/DrilldownFiltersBar";
 import downloadFile from "../utils/downloadFile";
 
 //const sampleURL = 'https://raw.githubusercontent.com/lutangar/cities.json/master/cities.json';
-const sampleData = require('../../public/samples/sample-data.json');
+import sampleData from '../../public/samples/sample-data.json';
 // const sampleTabularData = [
 //   "col A\tcolB\tcolC",
 //   "Short\tMedium length row\tLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
@@ -27,6 +27,26 @@ console.logTime = (text, ... other) => {
   console.log(`[+${now - last}ms] ${text.toString()}`, ... other)
   last = now;
 }
+
+window.requestIdleCallback =
+  window.requestIdleCallback ||
+  function (cb) {
+    const start = Date.now();
+    return setTimeout(function () {
+      cb({
+        didTimeout: false,
+        timeRemaining: function () {
+          return Math.max(0, 50 - (Date.now() - start));
+        }
+      });
+    }, 1);
+  }
+
+window.cancelIdleCallback =
+  window.cancelIdleCallback ||
+  function (id) {
+    clearTimeout(id);
+  }
 
 export default class CrunchyText extends Component {
   constructor(props) {
@@ -56,6 +76,7 @@ export default class CrunchyText extends Component {
     this.coreWorker.onLoadProgress(progress => this.setState({progress}))
 
     this.coreWorker.onSearchDone((results) => {
+      console.log("%cSearch done.", "color: green;")
       this.setState({results, stats: results.stats, progress: ""});
     })
 
@@ -64,11 +85,18 @@ export default class CrunchyText extends Component {
       this.setState({progress})
     })
 
+    let pendingId = null;
     this.coreWorker.onPartialSearchResult((results) => {
       if(!results.extras) {
         results.extras = this.state.results.extras;
       }
-      this.setState({ results, stats: results.stats });
+      const update = () => {
+        console.log("%cSearch progress: "+results.searchId, 'color: red;')
+        this.setState({results, stats: results.stats});
+      };
+
+      cancelIdleCallback(pendingId);
+      pendingId = requestIdleCallback(update)
     })
 
     this.coreWorker.onDrilldownStepsUpdate(steps => this.setState({drillDownSteps: steps}))
@@ -134,7 +162,7 @@ export default class CrunchyText extends Component {
 
         <DrilldownFiltersBar drilldownSteps={this.state.drillDownSteps} onDrilldownAction={this.drilldownAction.bind(this)}/>
 
-        <SearchResults progress={this.state.progress} res={this.state.results} onDownloadResults={this.downloadResults.bind(this)}/>
+        <SearchResults search={this.state.search} progress={this.state.progress} res={this.state.results} onDownloadResults={this.downloadResults.bind(this)}/>
       </div>
     );
   }

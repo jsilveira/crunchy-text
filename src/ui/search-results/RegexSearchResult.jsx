@@ -1,5 +1,5 @@
 import React from "react";
-import styles from "../../../public/stylesheets/search-results.less";
+import styles from "../../../public/stylesheets/search-results.module.scss";
 
 export class RegexSearchResult extends React.PureComponent {
   render() {
