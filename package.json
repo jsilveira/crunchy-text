@@ -6,7 +6,7 @@
   "scripts": {
     "start": "set NODE_ENV=development & snowpack dev",
     "start-worker": "esbuild src/worker.js --bundle --outfile=src/worker_bundle.js --watch",
-    "build": "esbuild src/worker.js --bundle --outfile=src/worker_bundle.js --minify & snowpack build & cp CNAME dist/CNAME",
+    "build": "esbuild src/worker.js --bundle --outfile=src/worker_bundle.js --minify & snowpack build",
     "old-build-lib": "parcel build src/index.js --public-url . --no-minify --out-dir ./lib",
     "old-build-gh": "rm dist/* & cp CNAME dist/CNAME & parcel build public/index.html"
   },
