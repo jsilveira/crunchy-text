@@ -24,18 +24,18 @@ export default class PreprocessorsSelector extends Component {
   render() {
     let buttons = []
     this.state.preprocessors.forEach((pre, i) => buttons.push(
-      <button type={"button"} key={i} className={'btn btn-sm ' + (pre.enabled ? 'btn-info' : 'btn-outline-secondary')}
-            onClick={this.btnClick.bind(this, pre)}>
-        {pre.name} {pre.enabled ? '(ON)' : '(OFF)'}
-    </button>))
+      <div className="form-check form-switch ms-3 fw-light"   onClick={this.btnClick.bind(this, pre)}>
+        <input className="form-check-input" type="checkbox" id="flexSwitchCheckDefault" checked={pre.enabled ? true : false}/>
+          <label className={`form-check-label small text-${pre.enabled ? 'light' : 'white-50' }`} htmlFor="flexSwitchCheckDefault">
+            {pre.name}
+          </label>
+      </div>));
 
-    return (
-      <span style={{zoom: 0.8}}>
-      {/*<span className={'text-info'}>Preprocessing:&nbsp;</span>*/}
-      <span className="btn-group">
-        {buttons}
-      </span>
-      </span>
-    );
+    return <span style={{}} className={'align-middle'}>
+    <span className={'text-white fw-light'}>Postprocessing:&nbsp;</span>
+    <span className="btn-group">
+      {buttons}
+    </span>
+    </span>;
   }
 }

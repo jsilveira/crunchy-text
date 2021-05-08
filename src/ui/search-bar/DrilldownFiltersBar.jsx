@@ -53,7 +53,7 @@ export default class DrilldownFiltersBar extends Component {
           { typeIcon }&nbsp;
           {searchQuery.replace(/[igm]+$/, '')} {isOn ? `(${affectedCount})`: ''}
         </span>
-        <span className={'btn btn-sm btn-link p0 pl-0'} onClick={this.removeStep.bind(this, step)}>
+        <span className={'btn btn-sm btn-link p0 ps-0'} onClick={this.removeStep.bind(this, step)}>
           <i className="material-icons">close</i>
         </span>
       </span>
@@ -61,25 +61,27 @@ export default class DrilldownFiltersBar extends Component {
 
     let stepsBar = [];
     if(filterSteps.length > 0) {
-      stepsBar = <div className="bg-dark container-fluid p-0 pl-2 pb-2 text-white">
+      stepsBar = <div className="bg-dark p-0 ps-2 pb-2 text-white">
         {filterSteps}
       </div>;
     }
 
     return (
-      <div style={{zoom: '0.8'}} className="drilldown-filters-bar">
+      <div style={{zoom: '0.75'}} className="drilldown-filters-bar">
         { stepsBar }
-        <div className="bg-light container-fluid text-white p-0">
-          <span className={'btn btn-link'} onClick={this.addFilter.bind(this)}>
-            <i className="material-icons align-middle pr-1">filter_list</i>
-            Search within results
-            &nbsp;<span className='badge badge-light'>Shift+Ent</span>
+        <div className="container-fluid text-white p-0">
+          <span className={'btn btn-link text-white-50 pe-1'} onClick={this.addFilter.bind(this)}>
+            <i className="material-icons align-middle pe-1">filter_list</i>
+            <span>Search within results</span>
           </span>
-          <span className={'btn btn-link'}  onClick={this.addExclusion.bind(this)}>
-            <i className="material-icons align-middle pr-1">remove_circle_outline</i>
+          <span className='badge text-secondary fw-light bg-light'>Shift+Ent</span>
+
+          <span className={'btn btn-link  text-white-50 pe-1'}  onClick={this.addExclusion.bind(this)}>
+            <i className="material-icons align-middle pe-1">remove_circle_outline</i>
             Exclude results
-            &nbsp;<span className='badge badge-light'>Ctrl+Ent</span>
           </span>
+          <span className='badge text-secondary fw-light bg-light'>Ctrl+Ent</span>
+
           <span className={'text-white'}>
           </span>
         </div>

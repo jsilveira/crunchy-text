@@ -137,7 +137,10 @@ export default class SearchResults extends Component {
     let searchRes = this.props.res;
 
     if (!searchRes) {
-      return (<div className={"m-3"}><h5 className="pl-2">No data has been loaded yet</h5></div>)
+      return (<div className={"m-4 pt-4 text-secondary text-center"}>
+        <h2 className="pt-4 text-center">Drag and drop a data file here...</h2>
+        <h3 className="pt-2 text-info ">.txt .csv .json .jsonl</h3>
+      </div>)
     }
 
     let items = (searchRes.matchSamples || []);
@@ -165,7 +168,7 @@ export default class SearchResults extends Component {
     </InfiniteScroll>;
 
     let stats = (searchRes.stats || {});
-    let status = this.props.progress || `Searched ${stats.totalCount.toLocaleString()} items in ${stats.searchTime}ms`;
+    let status = this.props.progress || <span>Searched {stats.totalCount.toLocaleString()} items in <span className={'text-info'}>{stats.searchTime}ms</span></span>;
 
     const extras = [];
 
@@ -194,7 +197,7 @@ export default class SearchResults extends Component {
 
         extras.push(<h5 key={'title'}>
           Unique matches: {top.length.toLocaleString()}&nbsp;
-          <span className='zoom-small btn btn-sm btn-link ml-1 p-0'
+          <span className='zoom-small btn btn-sm btn-link ms-1 p-0'
                 onClick={() => this.downloadUniqueMatches(top.map(t => t[0]))}
                 title={`Download ${top.length} unique matches as json`}>
              <i className="material-icons align-middle">file_download</i>
@@ -215,17 +218,17 @@ export default class SearchResults extends Component {
       }
     }
 
-    let result = <div className="container-fluid bg-light">
+    let result = <div className="">
       <div className={"row"}>
-        <div className={"col-9 p-3"} style={{overflow: 'auto'}}>
-          <div className={"row"}>
-            <div className={"col-9 p-0 pl-3"}>
-              <h5 className={'pl-2'}>
+        <div className={"col-9 py-3"} style={{overflow: 'auto'}}>
+          <div className={"d-flex justify-content-between"}>
+            <div className={""}>
+              <h5 className={''}>
                 {stats.matchesCount.toLocaleString()} matches &nbsp;
-                <em className={"text-info small"}>{status}</em>
+                <span className={"text-black-50 fw-light small"}>{status}</span>
               </h5>
             </div>
-            <div className={"col-3 p-0 text-right zoom-small"}>
+            <div className={"text-right zoom-small"}>
                <span className='btn btn-sm btn-link' onClick={this.props.onDownloadResults}
                      title={`Download ${stats.matchesCount} results as json`}>
                  <i className="material-icons align-middle">file_download</i>
@@ -234,7 +237,7 @@ export default class SearchResults extends Component {
           </div>
           {table}
         </div>
-        <div className={"col-3 bg-light p-3"}>{extras}</div>
+        <div className={"col-3 p-3"}>{extras}</div>
       </div>
     </div>;
 

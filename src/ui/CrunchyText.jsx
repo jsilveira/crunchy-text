@@ -10,8 +10,8 @@ import DrilldownFiltersBar from "./search-bar/DrilldownFiltersBar";
 import downloadFile from "../utils/downloadFile";
 
 //const sampleURL = 'https://raw.githubusercontent.com/lutangar/cities.json/master/cities.json';
-// import sampleData from '../../public/samples/sample-data.json';
-const sampleData = [];
+import sampleData from '../../public/samples/sample-data.json';
+// const sampleData = [];
 // const sampleTabularData = [
 //   "col A\tcolB\tcolC",
 //   "Short\tMedium length row\tLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
@@ -123,6 +123,19 @@ export default class CrunchyText extends Component {
     this.search()
   }
 
+  async inputDataChanged(file, fileData) {
+    let name = file.name;
+    console.logTime(`Sending file data ${name} to worker`)
+
+    this.setState({fileInput: {name, file}})
+
+    await this.coreWorker.loadRawTextData(file, fileData);
+
+    console.logTime(`File loaded by worker.`)
+
+    this.search()
+  }
+
   preprocessorsChanged(preprocessors) {
     preprocessors.forEach(p => p.className = p.name)
     this.coreWorker.setPreprocessors(preprocessors);
@@ -154,16 +167,23 @@ export default class CrunchyText extends Component {
     let {search, inputSettings, drillDownSteps, progress, results} = this.state;
 
     return (
-      <div>
+      <div className={'container-fluid'}>
         <InputBar value={this.state.fileInput}
                   onChange={this.fileInputChanged.bind(this)}
                   onPreprocessorChange={this.preprocessorsChanged.bind(this)}/>
 
-        <SearchBar value={this.state.search} onChange={this.searchChanged.bind(this)} onDrilldownAction={this.drilldownAction.bind(this)}/>
+        <div className={'bg-dark row align-items-center pb-2 pt-2 px-4'}>
+          <div className={'col-6 gx-0'}>
+            <SearchBar value={this.state.search} onChange={this.searchChanged.bind(this)} onDrilldownAction={this.drilldownAction.bind(this)}/>
+          </div>
+          <div className={'col-6 gx-0'}>
+            <DrilldownFiltersBar drilldownSteps={this.state.drillDownSteps} onDrilldownAction={this.drilldownAction.bind(this)}/>
+          </div>
+        </div>
 
-        <DrilldownFiltersBar drilldownSteps={this.state.drillDownSteps} onDrilldownAction={this.drilldownAction.bind(this)}/>
-
+        <div className={'mx-2'}>
         <SearchResults search={this.state.search} progress={this.state.progress} res={this.state.results} onDownloadResults={this.downloadResults.bind(this)}/>
+        </div>
       </div>
     );
   }
