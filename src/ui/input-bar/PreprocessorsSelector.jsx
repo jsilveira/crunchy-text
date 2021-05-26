@@ -12,7 +12,9 @@ export default class PreprocessorsSelector extends Component {
       ]
     };
 
-    props.onChange(this.state.preprocessors)
+    if(this.state.preprocessors) {
+      props.onChange(this.state.preprocessors)
+    }
   }
 
   btnClick(preprocessor) {
@@ -24,8 +26,8 @@ export default class PreprocessorsSelector extends Component {
   render() {
     let buttons = []
     this.state.preprocessors.forEach((pre, i) => buttons.push(
-      <div className="form-check form-switch ms-3 fw-light"   onClick={this.btnClick.bind(this, pre)}>
-        <input className="form-check-input" type="checkbox" id="flexSwitchCheckDefault" checked={pre.enabled ? true : false}/>
+      <div className="form-check form-switch ms-3 fw-light"   key={pre.name}>
+        <input className="form-check-input" type="checkbox" id="flexSwitchCheckDefault" checked={pre.enabled ? true : false} onChange={this.btnClick.bind(this, pre)}/>
           <label className={`form-check-label small text-${pre.enabled ? 'light' : 'white-50' }`} htmlFor="flexSwitchCheckDefault">
             {pre.name}
           </label>

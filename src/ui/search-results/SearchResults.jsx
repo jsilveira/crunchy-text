@@ -137,10 +137,16 @@ export default class SearchResults extends Component {
     let searchRes = this.props.res;
 
     if (!searchRes) {
-      return (<div className={"m-4 pt-4 text-secondary text-center"}>
-        <h2 className="pt-4 text-center">Drag and drop a data file here...</h2>
-        <h3 className="pt-2 text-info ">.txt .csv .json .jsonl</h3>
-      </div>)
+      if(this.props.progress) {
+        return (<div className={"m-4 pt-4 text-secondary text-center"}>
+          <h2 className="pt-4 text-center">{this.props.progress}</h2>
+        </div>)
+      } else {
+        return (<div className={"m-4 pt-4 text-secondary text-center"}>
+          <h2 className="pt-4 text-center">Drag and drop a data file here...</h2>
+          <h3 className="pt-2 text-info ">.txt .csv .json .jsonl</h3>
+        </div>)
+      }
     }
 
     let items = (searchRes.matchSamples || []);
@@ -224,11 +230,11 @@ export default class SearchResults extends Component {
           <div className={"d-flex justify-content-between"}>
             <div className={""}>
               <h5 className={''}>
-                {stats.matchesCount.toLocaleString()} matches &nbsp;
+                {(stats.matchesCount || 0).toLocaleString()} matches &nbsp;
                 <span className={"text-black-50 fw-light small"}>{status}</span>
               </h5>
             </div>
-            <div className={"text-right zoom-small"}>
+            <div className={"text-end zoom-small"}>
                <span className='btn btn-sm btn-link' onClick={this.props.onDownloadResults}
                      title={`Download ${stats.matchesCount} results as json`}>
                  <i className="material-icons align-middle">file_download</i>

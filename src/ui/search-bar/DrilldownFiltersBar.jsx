@@ -61,15 +61,15 @@ export default class DrilldownFiltersBar extends Component {
 
     let stepsBar = [];
     if(filterSteps.length > 0) {
-      stepsBar = <div className="bg-dark p-0 ps-2 pb-2 text-white">
+      stepsBar = <span className="bg-dark p-0 ps-2 pb-2 text-white">
         {filterSteps}
-      </div>;
+      </span>;
     }
 
     return (
       <div style={{zoom: '0.75'}} className="drilldown-filters-bar">
-        { stepsBar }
         <div className="container-fluid text-white p-0">
+          { stepsBar }
           <span className={'btn btn-link text-white-50 pe-1'} onClick={this.addFilter.bind(this)}>
             <i className="material-icons align-middle pe-1">filter_list</i>
             <span>Search within results</span>

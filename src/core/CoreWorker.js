@@ -229,9 +229,11 @@ export default class CoreWorker {
     this.preprocessors = _.map(_.filter(preprocessorsConfigs, c => c.enabled), config => {
       return new this.preprocessorsClasses[config.className](config);
     })
-    this.preprocessData(this.data);
-    this.updateSearchableData();
-    this.search(this.lastSearch);
+    if(this.data?.length) {
+      this.preprocessData(this.data);
+      this.updateSearchableData();
+      this.search(this.lastSearch);
+    }
   }
 
   search(searchParams) {

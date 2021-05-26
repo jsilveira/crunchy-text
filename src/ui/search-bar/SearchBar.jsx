@@ -32,6 +32,7 @@ export default class SearchBar extends Component {
     let KEYCODE_BACKSPACE = 8;
 
     if (keyCode === KEYCODE_ENTER) {
+      this.setState({ value: '' });
       if(e.shiftKey && this.state.value) {
         this.props.onDrilldownAction('addFilter');
       }

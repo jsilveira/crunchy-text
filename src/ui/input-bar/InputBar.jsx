@@ -2,11 +2,26 @@ import React, {Component} from 'react';
 import _ from 'lodash';
 
 import FileDrop from '../../lib/FileDropUPDATED'
-// import FileDrop from 'react-file-drop'
 import PreprocessorsSelector from "./PreprocessorsSelector";
 import "../../../public/stylesheets/file-drop.css"
 import {get, set} from "https://unpkg.com/idb-keyval@5.0.2/dist/esm/index.js";
 import Icon from "../common/Icon";
+
+function Tab({name, icon, selected, onClick, onSecondaryClick}) {
+  let style = selected ? 'btn-dark': 'btn-outline-dark';
+
+  const fixTabDoubleBorder = {marginRight: '-1px'};
+
+  return <span style={fixTabDoubleBorder} className={`btn btn-sm ${style} border-bottom-0 align-self-end rounded-0 rounded-top py-1 d-flex align-items-center`}>
+              <Icon icon={icon}/>
+
+              <span onClick={onClick || (() => true)}>
+                  <span className={"ms-1 me-1 small"}>{name}</span>
+              </span>
+
+              <Icon small icon={"close"} level={"secondary"} onClick={onSecondaryClick}/>
+  </span>;
+}
 
 export default class InputBar extends Component {
   constructor(props) {
@@ -14,7 +29,7 @@ export default class InputBar extends Component {
     this.state = {};
 
     get("lastFiles").then(files => {
-      this.setState({lastFiles: files || []});
+      this.setState({lastFiles: _.compact(files) || []});
     });
   }
 
@@ -26,16 +41,22 @@ export default class InputBar extends Component {
   //   }
   // }
 
-  async handleFileDrop(files) {
-    const droppedFile = files[0]
+  async handleFileDrop(dataTransferItems) {
+    let files = Array.from(dataTransferItems);
 
-    if (!droppedFile || !droppedFile.kind === 'file') {
+    if (!files.length || !files[0].kind === 'file') {
       return;
     }
 
-    const entry = await droppedFile.getAsFileSystemHandle();
+    // const entry = await droppedFile.getAsFileSystemHandle();
 
-    await this.loadFromFileHandle(entry);
+    let handles = await Promise.all(_.map(files, file => file.getAsFileSystemHandle()));
+
+    for(const handle of handles.slice(1)) {
+      await this.updateLastFiles(handle);
+    }
+
+    await this.loadFromFileHandle(handles[0]);
   }
 
   preprocessorsChanged(preprocessors) {
@@ -53,28 +74,36 @@ export default class InputBar extends Component {
     }
   }
 
+  async updateLastFiles(fileHandle) {
+    let lastFiles = this.state.lastFiles;
+
+    let repeated = false;
+    for(let i = 0;i<lastFiles.length;i++) {
+      let h = lastFiles[i];
+      if(h === fileHandle || await h.isSameEntry(fileHandle)) {
+        repeated = true;
+        lastFiles[i] = fileHandle;
+        break;
+      }
+    }
+    if(!repeated) {
+      lastFiles = [fileHandle, ... lastFiles];
+    }
+    await set("lastFiles", lastFiles);
+    console.log("Setting lastFiles")
+
+    this.setState({lastFiles: lastFiles})
+  }
+
   async loadFromFileHandle(fileHandle) {
     if (await this.verifyPermission(fileHandle)) {
       const file = await fileHandle.getFile();
 
-      let lastFiles = this.state.lastFiles;
+      await this.updateLastFiles(fileHandle);
 
-      let repeated = false;
-      for(let i = 0;i<lastFiles.length;i++) {
-        let h = lastFiles[i];
-        if(h === fileHandle || await h.isSameEntry(fileHandle)) {
-          repeated = true;
-          lastFiles[i] = fileHandle;
-          break;
-        }
-      }
-      if(!repeated) {
-        lastFiles = [fileHandle, ... lastFiles];
-      }
-      await set("lastFiles", lastFiles);
-      this.setState({lastFiles: lastFiles, currentFileHandle: fileHandle, currentFile: file})
+      this.setState({currentFileHandle: fileHandle, currentFile: file})
 
-      const contents = await file.text();
+      // const contents = await file.text();
 
       this.props.onChange({name: file.name, file});
     }
@@ -85,6 +114,12 @@ export default class InputBar extends Component {
       console.logTime(`Retrieved file handle "${fileHandleOrUndefined.name}" from IndexedDB.`);
       await this.loadFromFileHandle(fileHandleOrUndefined);
     }
+  }
+
+  async removeFileFromHistory(fileHandle) {
+    const lastFiles = _.without(this.state.lastFiles, fileHandle);
+    await set("lastFiles", lastFiles);
+    this.setState({lastFiles: lastFiles})
   }
 
   async verifyPermission(fileHandle, readWrite) {
@@ -107,15 +142,7 @@ export default class InputBar extends Component {
   render() {
     let {value} = this.props
 
-    let currentFileName, currentFileSize;
-    if (this.state.currentFile) {
-      let {name, size} = this.state.currentFile;
-      currentFileName = <span className={'align-self-end rounded-top px-3 py-1 me-2 bg-dark'}>
-        <span>{name}</span>
-      </span>
-
-      currentFileSize = <span className={'me-2 badge bg-warning text-dark'}>{Math.ceil(size / (1024 * 1024) * 10) / 10} MB</span>
-    }
+    const {lastFiles, currentFile, currentFileHandle} = this.state;
 
     let dragOther = <div className={'text-dark d-inline-block text-center my-2'}>
       Drag & drop a <strong>text/json/csv</strong> here or <a href={''} className={''} onClick={(e) => e.preventDefault() + this.loadFile()}>
@@ -123,23 +150,43 @@ export default class InputBar extends Component {
     </a>
     </div>
 
-    let recentFilesBtns = null;
-    if (this.state.lastFiles?.length) {
-      recentFilesBtns = _.without(this.state.lastFiles, this.state.currentFileHandle).slice(0,4).map(handle => <span key={handle.name}
-        className={'btn btn-sm btn-outline-dark border-bottom-0 align-self-end rounded-0 rounded-top py-0 pt-1 pb-1'}
-        onClick={() => this.reloadFile(handle)}>
-        <Icon icon={'undo'}/>
-        <span className={'ms-1 small'}>{handle.name}</span>
-    </span>);
+    let currentFileSize, fileTabs, moreFilesBtn;
+
+    if (lastFiles?.length) {
+      // let recent = _.without(this.state.lastFiles, this.state.currentFileHandle);
+      let recent = lastFiles.slice(0,5);
+
+      if(currentFileHandle && !_.includes(recent, currentFileHandle)) {
+        recent = [currentFileHandle, ... recent.slice(0,4)]
+      }
+
+      fileTabs = recent.map(handle => {
+        if (handle === currentFileHandle && currentFile) {
+          let {name, size} = currentFile;
+
+          currentFileSize = <span className={'me-2 badge bg-warning text-dark'}>{Math.ceil(currentFile.size / (1024 * 1024) * 10) / 10} MB</span>
+
+          return <Tab icon={'article'} key={handle.name} selected name={handle.name}
+                      onSecondaryClick={(e) => this.removeFileFromHistory(handle) + this.setState({currentFile: null, currentFileHandle: null})}/>;
+        }
+
+        return <Tab icon={'undo'} key={handle.name} name={handle.name} onClick={() => this.reloadFile(handle)}
+                    onSecondaryClick={(e) => this.removeFileFromHistory(handle) + e.preventDefault()}/>;
+      });
+
+      if(recent.length > 4) {
+        moreFilesBtn = <span className={'btn pb-1'} title={'See and edit recent files history...'}>
+          <Icon large icon={'history'} level={'black-50'} onClick={(e) => this.openHistory()}/>
+        </span>
+      }
     }
 
     return <div className={'row'}>
       <div className={'d-flex justify-content-between align-items-center px-4'}>
         <div className="d-flex align-self-end align-items-center text-white mt-2">
-          {currentFileName}
+          {fileTabs}
 
-          {recentFilesBtns}
-
+          { moreFilesBtn }
 
           <FileDrop frame={document} onDrop={this.handleFileDrop.bind(this)}>
             <div className="" id="navbarSupportedContent">

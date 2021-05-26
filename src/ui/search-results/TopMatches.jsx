@@ -12,9 +12,9 @@ export class TopMatches extends Component {
     const rows = []
     items.slice(0, 100).forEach(([uniqueMatch, count], i) => {
       rows.push(<tr key={i} className={""}>
-        <td className={"text-info text-right pe-3"}> {count.toString()} </td>
+        <td><div className={"text-info text-end pe-3"}> {count.toString()}</div> </td>
         <td>{uniqueMatch.toString()} </td>
-        <td className={'small text-secondary text-right ps-2'}>{((count / totalCount * 100)).toFixed(1)}%</td>
+        <td className={'small text-secondary text-end ps-2'}>{((count / totalCount * 100)).toFixed(1)}%</td>
       </tr>)
     });
 

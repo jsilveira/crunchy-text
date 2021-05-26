@@ -65,7 +65,7 @@ export default class CrunchyText extends Component {
     this.searchChanged = this.searchChanged.bind(this);
 
     this.coreWorker = new CoreWorkerProxy();
-    this.coreWorker.loadDataWithFormat({dataFormat: {type: 'text'}, data: sampleData});
+    // this.coreWorker.loadDataWithFormat({dataFormat: {type: 'text'}, data: sampleData});
     // this.coreWorker.loadDataWithFormat({dataFormat: {type: 'tabularText', delimiter: '\t'}, data: sampleTabularData});
 
     this.fileInputChanged = this.fileInputChanged.bind(this);
@@ -117,19 +117,6 @@ export default class CrunchyText extends Component {
     this.setState({fileInput: {name, file}})
 
     await this.coreWorker.loadFile(file);
-
-    console.logTime(`File loaded by worker.`)
-
-    this.search()
-  }
-
-  async inputDataChanged(file, fileData) {
-    let name = file.name;
-    console.logTime(`Sending file data ${name} to worker`)
-
-    this.setState({fileInput: {name, file}})
-
-    await this.coreWorker.loadRawTextData(file, fileData);
 
     console.logTime(`File loaded by worker.`)
 
