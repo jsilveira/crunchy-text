@@ -6,13 +6,16 @@ import {TopMatches} from "./TopMatches";
 
 import InfiniteScroll from 'react-infinite-scroller/index';
 
-function getHtmlTableResultRow(collection) {
+function getHtmlTableResultRow(collection, hiddenColumns) {
   let cols = [];
 
   for (let i = 0; i < collection.length; i++) {
+    if(hiddenColumns[i])
+      continue;
+
     const col = collection[i];
     const hasLongWord = col.match(/\S{50,}/);
-    let cssClass = hasLongWord ? 'withLongWords' : '';
+    let cssClass = hasLongWord ? 'withLongWords' : (col.length > 50 ? 'longLine' : '');
     // cols.push(<td key={i} className={cssClass}>{col}</td>);
     cols.push(`<td class="${cssClass}">${col}</td>`);
   }
@@ -52,8 +55,11 @@ class SearchResultsTable extends React.PureComponent {
     const items = matchSamples || [];
     const results = []
 
+    const hiddenColIndexes = {};
+    [].forEach(n => hiddenColIndexes[n] = true);
+
     if(resultsFormat.type === 'tabularText' && resultsFormat.columns) {
-      results.push(`<tr>${ _.map(resultsFormat.columns, (col,j) => `<th>${col}</th>`).join('') }</tr>`);
+      results.push(`<tr>${ _.map(resultsFormat.columns, (col,j) => hiddenColIndexes[j] ? '' : `<th>${col}</th>`).join('') }</tr>`);
     }
 
     items.slice(0, maxRows).forEach((res, i) => {
@@ -69,7 +75,7 @@ class SearchResultsTable extends React.PureComponent {
         cols = cols.split(resultsFormat.delimiter);
       }
       if (cols.length) {
-        results.push(getHtmlTableResultRow(cols));
+        results.push(getHtmlTableResultRow(cols, hiddenColIndexes));
       }
     });
 

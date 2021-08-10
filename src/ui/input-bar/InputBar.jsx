@@ -12,14 +12,14 @@ function Tab({name, icon, selected, onClick, onSecondaryClick}) {
 
   const fixTabDoubleBorder = {marginRight: '-1px'};
 
-  return <span style={fixTabDoubleBorder} className={`btn btn-sm ${style} border-bottom-0 align-self-end rounded-0 rounded-top py-1 d-flex align-items-center`}>
+  return <span style={fixTabDoubleBorder} onClick={onClick || (() => true)} className={`btn btn-sm ${style} border-bottom-0 align-self-end rounded-0 rounded-top py-1 d-flex align-items-center`}>
               <Icon icon={icon}/>
 
-              <span onClick={onClick || (() => true)}>
+              <span>
                   <span className={"ms-1 me-1 small"}>{name}</span>
               </span>
 
-              <Icon small icon={"close"} level={"secondary"} onClick={onSecondaryClick}/>
+              <Icon small icon={"close"} level={"secondary"} onClick={e => e.stopPropagation() + onSecondaryClick(e)}/>
   </span>;
 }
 

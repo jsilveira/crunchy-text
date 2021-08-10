@@ -4,7 +4,7 @@
   "description": "",
   "main": "lib/index.js",
   "scripts": {
-    "start": "set NODE_ENV=development & snowpack dev & esbuild src/worker.js --bundle --outfile=src/worker_bundle.js --watch",
+    "start": "set NODE_ENV=development & snowpack dev | esbuild src/worker.js --bundle --outfile=src/worker_bundle.js --watch",
     "build": "esbuild src/worker.js --bundle --outfile=src/worker_bundle.js --minify & snowpack build",
     "old-build-lib": "parcel build src/index.js --public-url . --no-minify --out-dir ./lib",
     "old-build-gh": "rm dist/* & cp CNAME dist/CNAME & parcel build public/index.html"
@@ -13,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "@snowpack/plugin-sass": "^1.4.0",
+    "csv-parse": "^4.16.0",
     "esbuild": "^0.11.18",
     "lodash": "^4.17.13",
     "react": "^16.13.1",

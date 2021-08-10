@@ -116,7 +116,11 @@ export default class CrunchyText extends Component {
 
     this.setState({fileInput: {name, file}})
 
-    await this.coreWorker.loadFile(file);
+    try {
+      await this.coreWorker.loadFile(file);
+    } catch(err) {
+      alert(err);
+    }
 
     console.logTime(`File loaded by worker.`)
 

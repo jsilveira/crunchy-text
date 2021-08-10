@@ -1,5 +1,5 @@
 .ResultsTable {
-  width: 100%;
+  //width: 100%;
   font-size: 14px;
 
   tr {
@@ -10,15 +10,33 @@
     }
   }
 
+  tr:hover {
+    td {
+      background: #fffcb3;
+      white-space: normal;
+    }
+  }
+
   td, th {
     padding: 2px 5px;
     border-top: solid 1px #DDD;
     border-left: solid 1px #DDD;
     background-color: white;
-    //word-break: break-all;
+    word-break: break-word;
+
+    max-width: 200px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    vertical-align: top;
 
     &:last-child {
       border-right: solid 1px #DDD;
+    }
+
+    &.longLine {
+      width: 200px;
+      min-width: 200px;
     }
 
     &.withLongWords {

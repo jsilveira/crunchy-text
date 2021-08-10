@@ -23,7 +23,13 @@ export default class CoreWorkerProxy {
 
     this.onMsg('proxyCallResponse', ({callId, res}) => {
       if(callId && this.pendingCalls[callId]) {
-        this.pendingCalls[callId](res);
+        this.pendingCalls[callId].resolve(res);
+      }
+    })
+
+    this.onMsg('proxyCallError', ({callId, error}) => {
+      if(callId && this.pendingCalls[callId]) {
+        this.pendingCalls[callId].reject(error);
       }
     })
 
@@ -45,7 +51,7 @@ export default class CoreWorkerProxy {
   async proxyCall(method, ... args) {
     const callId = "call"+Math.random()+"-"+new Date()
     const responsePromise = new Promise((resolve, reject) => {
-      this.pendingCalls[callId] = resolve;
+      this.pendingCalls[callId] = {resolve, reject};
     });
     this.worker.postMessage({method, args, callId})
     return responsePromise;

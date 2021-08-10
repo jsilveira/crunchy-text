@@ -27,14 +27,15 @@ export default class SearchableTextList extends SearchableList {
 
     for (let i = start; i < this.items.length; i++) {
       const item = this.items[i];
-      // const itemText = item.join('\t');
-      const itemText = item;
+      debugger;
+      const itemText = item.join('\t');
+      // const itemText = item;
 
       let execRes = null;
       let matches = null;
       let lastIndex = null;
       //TODO: NOT FINISHED.
-      throw new Error("Not finished")
+      // throw new Error("Not finished")
       while ((execRes = re.exec(itemText))) {
         // Prevent infinite loop if the regex does not consume characters
         if(execRes.index === lastIndex)
