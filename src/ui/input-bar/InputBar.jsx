@@ -145,7 +145,7 @@ export default class InputBar extends Component {
     const {lastFiles, currentFile, currentFileHandle} = this.state;
 
     let dragOther = <div className={'text-dark d-inline-block text-center my-2'}>
-      Drag & drop a <strong>text/json/csv</strong> here or <a href={''} className={''} onClick={(e) => e.preventDefault() + this.loadFile()}>
+      Drag a <strong>text/json/csv</strong> here or <a href={''} className={''} onClick={(e) => e.preventDefault() + this.loadFile()}>
       open a file
     </a>
     </div>
