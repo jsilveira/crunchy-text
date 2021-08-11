@@ -1,13 +1,12 @@
 import TextLoader from "./TextLoader.js";
 import _ from '../../lib/lodash.js'
-import parse from '../../../snowpack/pkg/csv-parse/lib/browser/sync.js';
 
 export default class CSVLoader extends TextLoader {
   async solveCSVFormat(data, metadata) {
     const {file} = metadata;
 
     // delimiter detection with a sample of data
-    let possibleDelimiters = [',', '\t', ';', '|'];
+    let possibleDelimiters = [',', '\t', ';'];
     const sampleRows = data.slice(0,10000).split('\n').slice(0,-1); // Ignore las row in case its truncated
     let delimiter = ',';
     let bestMatchCount = sampleRows.length;
@@ -32,7 +31,7 @@ export default class CSVLoader extends TextLoader {
   }
 
   async loadData(data, metadata) {
-    let {delimiter, comment, escape, quote} = await this.solveCSVFormat(data, metadata);
+    const {delimiter, comment, escape, quote} = await this.solveCSVFormat(data, metadata);
     console.time("cargando datita")
 
     // Max 100mb
@@ -46,15 +45,6 @@ export default class CSVLoader extends TextLoader {
     //   rows[i] = [line]
     //   i++;
     // }
-
-    stringRows = _.map(parse(data, {
-      // columns: true,
-      delimiter: '|',
-      skip_empty_lines: true
-    }), row => row.join('|'));
-    delimiter = '|'
-
-
     console.timeEnd("cargando datita")
     return {data: stringRows, dataFormat: {type: 'tabularText', delimiter}}
   }

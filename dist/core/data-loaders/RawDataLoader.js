@@ -23,11 +23,6 @@ export class RawDataLoader {
 
     let loader = new loaderClass();
 
-    try {
-      return loader.loadData(data, {file})
-    } catch(err) {
-      alert(`Loader ${loaderClass} failed with error: ${err.toString()}. Fallbacking to plain text loader`)
-      return new TextLoader().loadData(data, {file})
-    }
+    return loader.loadData(data, {file})
   }
 }

@@ -178,12 +178,8 @@ export default class CoreWorker {
       };
 
       reader.onload = async (e) => {
-        try {
-          await this.loadRawTextData(file, reader.result);
-          resolve();
-        } catch(err) {
-          reject(err);
-        }
+        await this.loadRawTextData(file,  reader.result);
+        resolve();
       };
 
       // Read in the image file as a binary string.

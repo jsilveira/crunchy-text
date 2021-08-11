@@ -25,16 +25,11 @@ export default class JSONLoader extends TextLoader {
   }
 
   async loadData(jsonString, metadata) {
-    const columnsWhitelist = ['full_name', 'career_experience', 'summary', 'search_reason', 'linkedin_handle', 'screen_notes', 'english_level', 'education_degree', 'current_studies', 'education_year', 'short_roles', 'github_url', 'twitter_url', 'website_url', 'blog_url', 'base_salary', '', '', '', '', ''];
-
     let dataRows = null;
     try {
       let data = JSON.parse(jsonString);
       if (_.isArray(data)) {
         let columns = this.samplePossibleColumns(data);
-
-        columns = columnsWhitelist;
-
         if (columns) {
           dataRows = _.map(data, obj => {
             let values = [];
@@ -44,7 +39,6 @@ export default class JSONLoader extends TextLoader {
               // Ensure csv format is not broken by a content tab character
               values.push(stringVal.replace(/\t/g, '\\t'));
             }
-
             return values.join('\t');
           });
 
